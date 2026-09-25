@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sajid's pixel city</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#f2e8cf; --panel:#1d2340; --panel-hi:#2a3260; --gold:#f6c85f; --gold-lo:#c9982f;
+  --board:#0e1320; --muted:#9fb3d9; --line:#5a6598; --forest:#2e6a45;
+  --page-bg:#f2e8cf; --page-ink:#1d2340; --page-line:#c9b98f;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page-bg:#151a31; --page-ink:#f2e8cf; --page-line:#39406a; }
+}
+:root[data-theme="dark"]{ --page-bg:#151a31; --page-ink:#f2e8cf; --page-line:#39406a; }
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html,body{height:100%;margin:0}
+body{background:var(--forest);overflow:hidden;color:var(--ink);font-family:"Pixelify Sans",ui-monospace,"Courier New",monospace;-webkit-tap-highlight-color:transparent}
+canvas#game{position:fixed;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;outline:none}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+.panel{background:var(--panel);color:var(--ink);border:3px solid var(--ink);box-shadow:0 0 0 3px var(--panel),5px 5px 0 3px rgba(0,0,0,.35)}
+.hud{position:fixed;z-index:5;pointer-events:none;top:calc(env(safe-area-inset-top,0px) + 12px);left:calc(env(safe-area-inset-left,0px) + 12px);right:calc(env(safe-area-inset-right,0px) + 12px);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.hud-right{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
+.hud-left{display:flex;flex-wrap:wrap;gap:10px}
+.chip{pointer-events:auto;padding:7px 11px;font:600 15px/1.25 "Pixelify Sans",ui-monospace,monospace}
+.chip strong{font:13px/1.3 Silkscreen,ui-monospace,monospace;color:var(--gold);display:block;font-weight:400}
+button.chip,a.chip{cursor:pointer;text-decoration:none}
+button.chip:hover,a.chip:hover{background:var(--panel-hi)}
+a.chip.gold{background:var(--gold);color:var(--panel)}
+
+.mini{position:fixed;z-index:3;left:calc(env(safe-area-inset-left,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);width:160px;height:120px;image-rendering:pixelated;border:3px solid var(--ink);box-shadow:0 0 0 3px var(--panel)}
+@media (max-width:760px),(max-height:520px){.mini{display:none}}
+.prompt{position:fixed;z-index:4;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);max-width:calc(100% - 130px);padding:8px 12px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tourbar{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 72px);display:flex;gap:10px;align-items:center;padding:6px 8px 6px 12px;font-size:15px;max-width:calc(100% - 28px)}
+.toast{position:fixed;z-index:12;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 76px);padding:8px 14px;font-size:16px;max-width:calc(100% - 28px);text-align:center}
+.act{position:fixed;z-index:4;width:62px;height:62px;right:calc(env(safe-area-inset-right,0px) + 18px);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);background:var(--gold);color:var(--panel);border:3px solid var(--panel);box-shadow:inset -4px -4px 0 var(--gold-lo),4px 4px 0 rgba(0,0,0,.35);font:24px/1 Silkscreen,monospace;cursor:pointer}
+
+.dialog{position:fixed;z-index:10;left:0;right:0;display:flex;justify-content:center;padding:0 14px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
+.dlg{width:100%;max-width:660px;max-height:min(76vh,640px);overflow:auto;padding:16px 18px 12px}
+.dlg h2{font:16px/1.35 Silkscreen,ui-monospace,monospace;font-weight:400;color:var(--gold);margin:0 0 10px}
+.dlg p{font-size:18px;line-height:1.5;margin:0 0 12px;max-width:62ch}
+.dlg p.small,.small{font-size:14px;line-height:1.45;color:var(--muted)}
+.dlg-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:4px;font-size:14px;color:var(--muted)}
+
+.board{background:var(--board);border:2px solid #39406a;padding:8px 12px;margin:0 0 12px;font:12px/1.9 Silkscreen,ui-monospace,monospace;color:var(--gold)}
+.board div{display:flex;justify-content:space-between;gap:16px}
+.board span:first-child{color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;padding:0;list-style:none}
+.tags li{border:2px solid var(--line);padding:2px 7px;font-size:14px;color:#c9d2ee}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 8px}
+.btn{display:inline-block;background:var(--gold);color:var(--panel);text-decoration:none;border:none;cursor:pointer;font:600 15px/1.1 "Pixelify Sans",ui-monospace,monospace;padding:9px 12px;box-shadow:inset -3px -3px 0 var(--gold-lo)}
+.btn:hover{background:#ffd978}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+.btn.ghost:hover{background:var(--panel-hi)}
+.btn.tab[aria-selected="true"]{background:var(--gold);color:var(--panel);box-shadow:inset -3px -3px 0 var(--gold-lo)}
+
+.w{margin:0 0 12px}
+.w label{display:block;font-size:15px;color:var(--muted);margin:10px 0 4px}
+.w input[type=range]{width:100%;accent-color:var(--gold)}
+.w select,.w input[type=text],.w textarea{width:100%;font:16px "Pixelify Sans",ui-monospace,monospace;background:var(--board);color:var(--ink);border:2px solid var(--line);padding:6px 8px;border-radius:0}
+.w textarea{min-height:64px;resize:vertical}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.meter{height:16px;background:var(--board);border:2px solid var(--line);margin:12px 0 6px}
+.meter i{display:block;height:100%;transition:width .2s}
+.flights{width:100%;border-collapse:collapse;margin:10px 0;font:12px/1.9 Silkscreen,ui-monospace,monospace;background:var(--board)}
+.flights th,.flights td{text-align:left;padding:2px 8px;border-bottom:1px solid #262d4d;font-weight:400}
+.flights th{color:var(--muted)}
+.ok{color:#7ee787}.warn{color:var(--gold)}.bad,.dlg p.small.bad{color:#ff8a7a}
+pre.sql{background:var(--board);color:#9fd0e6;border:2px solid #39406a;padding:8px 10px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;margin:10px 0;min-height:3em}
+.term{background:#0b0f1a;color:#7ee787;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;padding:10px;height:190px;overflow:auto;border:2px solid #39406a;white-space:pre-wrap}
+.term-in{display:flex;gap:8px;align-items:center;margin-top:6px;font:14px ui-monospace,Menlo,Consolas,monospace;color:#7ee787}
+.term-in input{flex:1;font:14px ui-monospace,Menlo,Consolas,monospace !important;color:#7ee787 !important}
+.list{margin:0 0 12px;padding-left:1.1em}
+.list li{margin:4px 0;font-size:16px;line-height:1.45}
+.group-title{font:13px/1.4 Silkscreen,ui-monospace,monospace;color:var(--gold);margin:14px 0 6px}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:0 0 12px}
+.photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border:3px solid var(--ink)}
+.social{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #262d4d;flex-wrap:wrap}
+.social-name{font:12px/1.4 Silkscreen,ui-monospace,monospace;color:var(--gold);min-width:84px}
+.social-url{flex:1;min-width:120px;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c9d2ee}
+.classic .social-url{color:inherit}.classic .social{border-color:var(--page-line)}
+.medal{display:inline-block;width:12px;height:12px;margin-right:8px;vertical-align:-1px;box-shadow:inset -2px -2px 0 rgba(0,0,0,.3)}
+
+.sheet{position:fixed;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;background:rgba(10,14,30,.6);padding:calc(env(safe-area-inset-top,0px) + 16px) 14px calc(env(safe-area-inset-bottom,0px) + 16px)}
+.sheet .panel{width:100%;max-width:740px;max-height:100%;overflow:auto;padding:18px}
+.sheet h2{font:17px/1.35 Silkscreen,ui-monospace,monospace;font-weight:400;color:var(--gold);margin:0}
+.sheet-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.slot{background:#141a33;border:2px solid #39406a;padding:8px;font-size:15px;min-height:42px;box-shadow:inset 2px 2px 0 #242c52}
+#bigMap{width:100%;max-width:640px;display:block;margin:0 auto;image-rendering:pixelated;border:2px solid #39406a}
+.districts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+
+.classic{position:fixed;inset:0;z-index:20;overflow:auto;background:var(--page-bg);color:var(--page-ink);padding:calc(env(safe-area-inset-top,0px) + 24px) 20px calc(env(safe-area-inset-bottom,0px) + 48px)}
+.classic .wrap{max-width:700px;margin:0 auto}
+.classic .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.classic h1{font:22px/1.3 Silkscreen,ui-monospace,monospace;font-weight:400;margin:0}
+.classic .lede{font-size:17px;margin:4px 0 12px;opacity:.8}
+.classic h2{font:18px/1.3 Silkscreen,ui-monospace,monospace;font-weight:400;margin:34px 0 0;padding-bottom:8px;border-bottom:3px solid var(--page-line)}
+.classic section{padding:18px 0 4px}
+.classic h3{font:15px/1.35 Silkscreen,ui-monospace,monospace;font-weight:400;margin:0 0 8px}
+.classic p{font-size:18px;line-height:1.55;margin:0 0 12px}
+.classic .tags li{border-color:var(--page-line);color:var(--page-ink)}
+.classic .small{color:inherit;opacity:.75}
+.classic .group-title{color:inherit}
+@media (max-width:760px){.toast{top:calc(env(safe-area-inset-top,0px) + 124px)}}
+@media (max-width:520px){.dlg p{font-size:17px}.prompt{font-size:14px}.chip{font-size:14px;padding:6px 9px}}
+@media (prefers-reduced-motion: reduce){.meter i{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="game" tabindex="0" aria-label="A small pixel city. Each building opens one of Sajid's projects. Use Classic view for a plain page."></canvas>
+
+<div class="hud">
+  <div class="hud-left">
+    <div class="panel chip"><strong>Sajid · <span id="area">Projects</span></strong><span id="count">Visited 0</span></div>
+    <div class="panel chip" aria-live="off"><strong>Arlington, TX</strong><span id="clock">--:--</span></div>
+  </div>
+  <div class="hud-right">
+    <button class="panel chip" id="mapBtn" type="button">Map</button>
+    <button class="panel chip" id="skillsBtn" type="button">Skills</button>
+    <button class="panel chip" id="tourBtn" type="button">Tour</button>
+    <a class="panel chip gold" id="resumeBtn" target="_blank" rel="noopener" hidden>Resume</a>
+    <button class="panel chip" id="classicBtn" type="button">Classic view</button>
+  </div>
+</div>
+
+<canvas class="mini" id="mini" width="160" height="120" aria-hidden="true"></canvas>
+<div class="panel prompt" id="prompt" hidden></div>
+<div class="panel tourbar" id="tourBar" hidden><span id="tourText"></span><button class="btn ghost" id="tourStop" type="button">Stop</button></div>
+<div class="panel toast" id="toast" role="status" hidden></div>
+<button class="act" id="actBtn" type="button" aria-label="Open" hidden>A</button>
+
+<div class="dialog" id="dialog" hidden>
+  <div class="panel dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+    <h2 id="dlgTitle"></h2>
+    <p id="dlgText"></p>
+    <div id="dlgExtra" hidden></div>
+    <div class="dlg-foot"><span id="dlgHint"></span><button class="btn ghost" id="dlgClose" type="button">Close</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="mapSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="mapTitle">
+    <div class="sheet-top"><h2 id="mapTitle">City map: five areas</h2><button class="btn ghost" data-close type="button">Close</button></div>
+    <canvas id="bigMap" width="320" height="240" aria-hidden="true"></canvas>
+    <div class="districts" id="districts"></div>
+  </div>
+</div>
+
+<div class="sheet" id="skillsSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="skillsTitle">
+    <div class="sheet-top"><h2 id="skillsTitle">Backpack</h2><button class="btn ghost" data-close type="button">Close</button></div>
+    <div id="skillsBody"></div>
+  </div>
+</div>
+
+<div class="classic" id="classic" hidden>
+  <div class="wrap">
+    <div class="top"><h1>Sajid's portfolio</h1><button class="btn" id="backBtn" type="button">Back to the city</button></div>
+    <p class="lede">Everything from the city, as a plain page.</p>
+    <div id="classicList"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+/* =====================================================================
+   EDIT HERE. Empty links stay hidden until you fill them in.
+   ===================================================================== */
+const CONFIG = {
+  gradDate: "May 2029",
+  email: "you@example.com",
+  github: "https://github.com/SH-Shad",
+  linkedin: "https://www.linkedin.com/in/md-sajid-hossain-sad/",
+  resume: "",
+  links: {
+    irop: "", iropDemo: "", churn: "", campuspos: "", finance: "", sql: "",
+    geograph: "", geographLive: "", ats: "", pi: "", multiagent: "",
+    supply: "", rag: "", weather: ""
+  },
+  social: { youtube: "", instagram: "", x: "" },   // add handles to show them in the Social Club
+  photos: [],          // e.g. ["photos/event-1.jpg", "photos/event-2.jpg"]
+  personal: {
+    likes: ["Working on my 2007 Camry", "Collecting and layering fragrances", "Shooting photos and video", "Cooking with whatever is in the pantry"],
+    dislikes: [],      // e.g. ["Cold coffee", "Slow Wi-Fi"]
+    chill: ""          // e.g. "Late drive with music, then food."
+  },
+  liveWeather: true,
+  car: { name: "2007 Toyota Camry LE", color: "#b9c0c9" },  // change color to match yours
+  pet: { name: "Mimi" }                                      // the cat by your house
+};
+const code = k => CONFIG.links[k] || CONFIG.github;
+const live = k => CONFIG.links[k] || "";
+
+/* ===================== Small DOM helper ===================== */
+let uid = 0;
+function h(tag, props, ...kids){
+  const el = document.createElement(tag);
+  if (props) for (const k in props) {
+    const v = props[k];
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return el;
+}
+const row = (k,v) => h("div", null, h("span", null, k), h("span", null, v));
+const board = rows => h("div", {class:"board"}, rows.map(([k,v]) => row(k,v)));
+
+/* ===================== Widgets ===================== */
+function wCascade(){
+  const id = "u"+(++uid), val = h("b", null, "45"), out = h("tbody");
+  const inp = h("input", {type:"range", min:"0", max:"120", step:"5", value:"45", id});
+  const legs = [["DFW to AUS",0],["AUS to DFW",20],["DFW to MSY",15],["MSY to DFW",25],["DFW to OKC",10]];
+  function upd(){
+    val.textContent = inp.value; out.replaceChildren();
+    let d = +inp.value;
+    legs.forEach(([name,slack], i) => {
+      if (i) d = Math.max(0, d-slack);
+      const cls = d>=30 ? "bad" : d>0 ? "warn" : "ok";
+      out.append(h("tr", null, h("td", null, name), h("td", null, i ? slack+" min" : "none"), h("td", {class:cls}, d ? "+"+d+" min" : "on time")));
+    });
+  }
+  inp.addEventListener("input", upd); upd();
+  return h("div", {class:"w"},
+    h("p", {class:"group-title"}, "Try the cascade"),
+    h("label", {for:id}, "First flight of the day leaves ", val, " min late"), inp,
+    h("table", {class:"flights"}, h("thead", null, h("tr", null, h("th", null, "Leg"), h("th", null, "Slack"), h("th", null, "Delay"))), out),
+    h("p", {class:"small"}, "One aircraft flying five legs. Spare ground time between flights (slack) absorbs part of the delay and the rest rides along. The slack values are made up to show the effect."));
+}
+
+function wChurn(){
+  const ia="u"+(++uid), ib="u"+(++uid), ic="u"+(++uid);
+  const prod = h("select", {id:ia}, [1,2,3,4].map(n => h("option", {value:n}, n + (n>1 ? " products" : " product"))));
+  prod.value = "2";
+  const ageV = h("b", null, "35"), age = h("input", {type:"range", min:"18", max:"80", value:"35", id:ib});
+  const ctry = h("select", {id:ic}, ["France","Spain","Germany"].map(c => h("option", {value:c}, c)));
+  const bar = h("i"), res = h("p", {class:"small"});
+  function upd(){
+    ageV.textContent = age.value;
+    let p = {1:.27, 2:.08, 3:.82, 4:.97}[+prod.value];
+    p += 0.28*Math.exp(-(((+age.value-52)/11)**2)) - 0.04;
+    if (ctry.value === "Germany") p += 0.12;
+    p = Math.max(.02, Math.min(.98, p));
+    const seg = p<.3 ? "Low" : p<.6 ? "Medium" : "High";
+    bar.style.width = Math.round(p*100)+"%";
+    bar.style.background = seg==="Low" ? "#5fbf77" : seg==="Medium" ? "#f6c85f" : "#e0644f";
+    res.textContent = "Estimated churn risk " + Math.round(p*100) + "%, " + seg + " risk segment.";
+  }
+  for (const x of [prod, age, ctry]) { x.addEventListener("input", upd); x.addEventListener("change", upd); }
+  upd();
+  return h("div", {class:"w"},
+    h("p", {class:"group-title"}, "Toy risk checker"),
+    h("label", {for:ia}, "Products held"), prod,
+    h("label", {for:ib}, "Age ", ageV), age,
+    h("label", {for:ic}, "Country"), ctry,
+    h("div", {class:"meter"}, bar), res,
+    h("p", {class:"small"}, "A rule-of-thumb toy built from the model's top drivers: number of products, age, and Germany. The real scores come from the XGBoost model in the repo."));
+}
+
+function wSQL(){
+  const QS = [
+    {q:"What share of orders were returned?", sql:"SELECT ROUND(100.0 * SUM(status = 'returned') / COUNT(*), 1) AS return_pct\nFROM orders;", rows:[["return_pct"],["22.6"]]},
+    {q:"Which products bring in the most revenue?", sql:"SELECT p.name, ROUND(SUM(oi.quantity * oi.unit_price)) AS revenue\nFROM order_items oi\nJOIN products p ON p.product_id = oi.product_id\nGROUP BY p.name\nORDER BY revenue DESC\nLIMIT 5;", rows:[["name","revenue"],["Air Purifier","$12,497"],["Mechanical Keyboard","$11,348"]], note:"First two rows shown."},
+    {q:"Delete all the customers", sql:"DELETE FROM customers;", err:"Blocked at stage 1: only SELECT statements are allowed to run."},
+    {q:"Will it rain tomorrow?", sql:"CANNOT_ANSWER", err:"The database holds customers, products, and orders. It has no weather data, so the assistant declines instead of guessing."}
+  ];
+  const pre = h("pre", {class:"sql"}, "Pick a question."), res = h("div");
+  let timer = null;
+  function run(item){
+    clearInterval(timer); res.replaceChildren(); pre.textContent = "";
+    let i = 0;
+    const done = () => {
+      clearInterval(timer); pre.textContent = item.sql;
+      if (item.err) { res.replaceChildren(h("p", {class:"small bad"}, item.err)); return; }
+      const [head, ...body] = item.rows;
+      res.replaceChildren(h("table", {class:"flights"}, h("thead", null, h("tr", null, head.map(c => h("th", null, c)))), h("tbody", null, body.map(r => h("tr", null, r.map(c => h("td", {class:"ok"}, c)))))), item.note ? h("p", {class:"small"}, item.note) : null);
+    };
+    if (reduceMotion) return done();
+    timer = setInterval(() => { i += 3; pre.textContent = item.sql.slice(0, i); if (i >= item.sql.length) done(); }, 16);
+  }
+  return h("div", {class:"w"},
+    h("p", {class:"group-title"}, "Ask the desk"),
+    h("div", {class:"links"}, QS.map(item => h("button", {class:"btn ghost", type:"button", onclick:() => run(item)}, item.q))),
+    pre, res,
+    h("p", {class:"small"}, "These answers were recorded from real test runs. The live app calls the model each time."));
+}
+
+function wTerm(){
+  const out = h("div", {class:"term", role:"log", "aria-live":"polite"});
+  const inp = h("input", {type:"text", "aria-label":"Terminal command", autocomplete:"off", autocapitalize:"off", spellcheck:"false"});
+  const print = s => { out.append(s + "\n"); out.scrollTop = out.scrollHeight; };
+  print("Ubuntu Server 24.04 on a Raspberry Pi. Type help to see commands.");
+  const hasResume = () => CONFIG.resume && CONFIG.resume !== "#";
+  const CMDS = {
+    help: () => "whoami  ls  ls projects  cat about.txt  cat resume.txt  uname -a  uptime  date  clear  exit",
+    whoami: () => "sajid: Information Systems student at UT Arlington",
+    ls: () => "about.txt  projects/  resume.txt",
+    "ls projects": () => "irop-command-center/  bank-churn-dashboard/  supply-chain-risk-platform/\ntext-to-sql-assistant/  geograph/  logistics-rag-assistant/\nweather-pipeline/  campuspos/  finance-agent/  ats-analyzer/\nmulti-agent-report-generator/",
+    "cat about.txt": () => "I build data, ML, and AI projects, and I like taking things apart to see why they broke. My car included.",
+    "cat resume.txt": () => hasResume() ? "Opening the resume in a new tab." : "resume.txt: ask me for a copy at " + CONFIG.email,
+    "uname -a": () => "Linux shed 6.8.0 aarch64 GNU/Linux",
+    uptime: () => "up " + Math.max(1, Math.floor(t/60)) + " min, 1 user (you)",
+    date: () => new Date().toString(),
+    exit: () => "logout blocked: there are still buildings you haven't visited."
+  };
+  inp.addEventListener("keydown", e => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const c = inp.value.trim(); inp.value = "";
+    print("sajid@shed:~$ " + c);
+    if (!c) return;
+    if (c === "clear") { out.textContent = ""; return; }
+    if (c.startsWith("sudo")) { print("sajid is not in the sudoers file. This incident will be reported."); return; }
+    if (c === "cat resume.txt" && hasResume()) window.open(CONFIG.resume, "_blank", "noopener");
+    const f = CMDS[c];
+    print(f ? f() : c.split(" ")[0] + ": command not found. Try help.");
+  });
+  setTimeout(() => inp.focus({preventScroll:true}), 30);
+  return h("div", {class:"w"}, out, h("div", {class:"term-in"}, h("span", null, "$"), inp));
+}
+
+const WX_TEXT = c => c===0 ? "Clear" : c<=3 ? "Partly cloudy" : c<=48 ? "Fog" : c<=57 ? "Drizzle" : c<=67 ? "Rain" : c<=77 ? "Snow" : c<=82 ? "Showers" : "Thunderstorms";
+function wWeather(){
+  if (!wx) return h("p", {class:"small"}, "When this page runs on its own site, like GitHub Pages, this panel shows the live Arlington reading and the city's sky matches it. The claude.ai preview blocks outside requests.");
+  return h("div", null, h("p", {class:"group-title"}, "Live from Arlington"),
+    board([["Temperature", Math.round(wx.temp)+"°F"], ["Sky", WX_TEXT(wx.code)], ["Wind", Math.round(wx.wind)+" mph"], ["Source", "Open-Meteo"]]));
+}
+
+const ROT = [["EKMFLGDQVZNTOWYHXUSPAIBRCJ","Q"],["AJDKSIRUXBLHWTMCQGZNPYFVOE","E"],["BDFHJLCPRTXVZNYEIWGAKMUSQO","V"]];
+const REF = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
+const INV = ROT.map(r => { const a=[]; for (let i=0;i<26;i++) a[r[0].charCodeAt(i)-65]=i; return a; });
+function enigma(text){
+  const pos=[0,0,0]; let out="";
+  const fwd=(r,c,p)=>(ROT[r][0].charCodeAt((c+p)%26)-65-p+26)%26, back=(r,c,p)=>(INV[r][(c+p)%26]-p+26)%26;
+  for (const ch of text.toUpperCase()) {
+    const c0 = ch.charCodeAt(0)-65;
+    if (c0<0 || c0>25) { if (ch===" ") out+=" "; continue; }
+    const mN = pos[1]===ROT[1][1].charCodeAt(0)-65, rN = pos[2]===ROT[2][1].charCodeAt(0)-65;
+    if (mN) { pos[0]=(pos[0]+1)%26; pos[1]=(pos[1]+1)%26; } else if (rN) pos[1]=(pos[1]+1)%26;
+    pos[2]=(pos[2]+1)%26;
+    let c=c0; c=fwd(2,c,pos[2]); c=fwd(1,c,pos[1]); c=fwd(0,c,pos[0]); c=REF.charCodeAt(c)-65; c=back(0,c,pos[0]); c=back(1,c,pos[1]); c=back(2,c,pos[2]);
+    out += String.fromCharCode(c+65);
+  }
+  return out;
+}
+function wEnigma(){
+  const id = "u"+(++uid);
+  const inp = h("textarea", {id, spellcheck:"false"}); inp.value = "HELLO RECRUITER";
+  const out = h("pre", {class:"sql"});
+  const upd = () => { out.textContent = enigma(inp.value) || " "; };
+  inp.addEventListener("input", upd); upd();
+  return h("div", {class:"w"},
+    h("p", {class:"group-title"}, "Exhibit: Enigma machine"),
+    h("label", {for:id}, "Type a message"), inp, out,
+    h("p", {class:"small"}, "Rotors I, II, III with reflector B, all starting at A. Paste the output back in and it decodes, same as the real machine. My original simulator is in Python; this is a JavaScript port."));
+}
+
+function wMedals(){
+  const M = [
+    ["#e8c04a","Gold, Pharmacology and Toxicology, International Biogenesis Olympiad 2023"],
+    ["#c9ced6","Silver, Anatomy and Physiology, International Biogenesis Olympiad 2023"],
+    ["#c7864a","Bronze, Cellular and Molecular Biology, International Biogenesis Olympiad 2023"],
+    ["#5a6598","Semi-finalist, ClimateScience Olympiad 2024"],
+    ["#5a6598","Quarter-finalist, ClimateScience Olympiad 2023 and early 2024"],
+    ["#5a6598","Pre-finalist, International Youth Math Challenge 2024"],
+    ["#5a6598","Pre-finalist, International Astronomy and Astrophysics Competition 2024"],
+    ["#39406a","Participant: Bangladesh Mathematical Olympiad, International Physics Realm, and the Queen's Commonwealth Essay Competition, 2024"]
+  ];
+  return h("div", {class:"w"}, h("p", {class:"group-title"}, "Medals and results"),
+    h("ul", {class:"list", style:"list-style:none;padding-left:0"}, M.map(([c,x]) => h("li", null, h("span", {class:"medal", style:"background:"+c}), x))));
+}
+
+function wCerts(){
+  const G = [
+    ["IBM", "Tools for Data Science; What is Data Science?"],
+    ["Microsoft and LinkedIn", "Career Essentials in System Administration"],
+    ["freeCodeCamp", "Scientific Computing with Python; Responsive Web Design; JavaScript Algorithms and Data Structures"],
+    ["HackerRank", "Python (Basic); Problem Solving (Basic)"],
+    ["MathWorks", "MATLAB Onramp"],
+    ["Adobe", "Professional certificates in Photoshop, Illustrator, and Premiere Pro"],
+    ["LinkedIn Learning", "Python, Excel, Word, PowerPoint, Photoshop, Illustrator, Premiere Pro, Raspberry Pi, Arduino"],
+    ["NASBA", "Excel Essential Training; Raspberry Pi Essential Training"],
+    ["Ostad", "Data Science Fundamentals; Fundamentals of Cybersecurity; Run Your First Code with Python"],
+    ["U.S. Department of State", "English for STEM; Interactive Workshop"],
+    ["Others", "10 Minute School (Word, Excel, PowerPoint); Passport to Earning (Excel); WSDA New Zealand (Professional English); Youth Science Journal (IFYR)"]
+  ];
+  return h("div", {class:"w"}, G.map(([who, what]) => h("div", null, h("p", {class:"group-title"}, who), h("p", {class:"small", style:"margin:0 0 4px"}, what))));
+}
+
+function wMisfire(){
+  const box = h("div", {class:"w"});
+  const S = {
+    start: {t:"The check engine light is on and the car shakes at idle. The scanner reads P0302: cylinder 2 misfire.", o:[["Replace all four spark plugs","plugs"],["Swap coil 2 with coil 3 and rescan","swap"],["Turn up the radio","radio"]]},
+    plugs: {t:"New plugs, same shake, and the code comes right back. Money spent, cause not found.", o:[["Go back","start"]]},
+    radio: {t:"The shake is still there. It's just harder to hear now.", o:[["Go back","start"]]},
+    swap:  {t:"After the swap the code still says P0302. The misfire stayed on cylinder 2, so the coil isn't the problem.", o:[["Pull the coil and look into the plug well","well"],["Swap the coil back and hope","start"]]},
+    well:  {t:"The plug well is wet with oil. The oil is shorting the spark before it reaches the plug.", o:[["Clean the well and dry the plug","clean"]]},
+    clean: {t:"The idle smooths out. The oil came from somewhere, though: the valve cover gasket is leaking into the well. Replace it or the misfire comes back.", o:[["Start over","start"]], win:true}
+  };
+  function show(k){
+    const s = S[k];
+    box.replaceChildren(h("p", {class:"group-title"}, s.win ? "Fixed" : "Diagnose the misfire"), h("p", null, s.t),
+      h("div", {class:"links"}, s.o.map(([l,n]) => h("button", {class:"btn ghost", type:"button", onclick:() => show(n)}, l))));
+  }
+  show("start"); return box;
+}
+
+const SCENTS = [
+  {n:"Club de Nuit Intense Man", own:true, adj:"Smoky", noun:"Pineapple", note:"smoky pineapple and birch"},
+  {n:"Born In Roma Intense", own:true, adj:"Velvet", noun:"Vanilla", note:"warm vanilla and lavender"},
+  {n:"Versace Eros", adj:"Cool", noun:"Mint", note:"mint, green apple, and vanilla"},
+  {n:"Gisada Ambassador Men", adj:"Golden", noun:"Amber", note:"sweet and warm"},
+  {n:"Polo Earth", adj:"Green", noun:"Garden", note:"fresh green and earthy"},
+  {n:"Polo Red", adj:"Bright", noun:"Spice", note:"red fruit and spice"}
+];
+function wScent(){
+  const ia="u"+(++uid), ib="u"+(++uid);
+  const opts = () => SCENTS.map((s,i) => h("option", {value:i}, s.n + (s.own ? " (on my shelf)" : "")));
+  const a = h("select", {id:ia}, opts()), b = h("select", {id:ib}, opts());
+  a.value = "0"; b.value = "1";
+  const out = h("div");
+  function upd(){
+    const A = SCENTS[+a.value], B = SCENTS[+b.value];
+    if (A === B) { out.replaceChildren(h("p", {class:"small"}, "Pick two different bottles.")); return; }
+    out.replaceChildren(board([["Blend", A.adj+" "+B.noun], ["Base", B.n], ["Top", A.n]]),
+      h("p", {class:"small"}, "One spray of " + B.n + " on the chest, one of " + A.n + " on the neck. You get " + A.note + " sitting over " + B.note + "."));
+  }
+  for (const x of [a,b]) { x.addEventListener("input", upd); x.addEventListener("change", upd); }
+  upd();
+  return h("div", null, h("p", {class:"small"}, "I'm building a signature scent by layering. Mix two and see what you get."),
+    h("label", {for:ia}, "Top layer"), a, h("label", {for:ib}, "Base layer"), b, out);
+}
+function wKitchen(){
+  const P = ["rice","eggs","onion","lentils","potatoes","garlic","chili","tomato","frozen peas","bread","yogurt","chicken"];
+  const out = h("div");
+  function draw(){
+    const pick = [...P].sort(() => Math.random()-.5).slice(0,3), has = x => pick.includes(x);
+    let dish = "a one-pan stir-fry with all three";
+    if (has("lentils")) dish = has("rice") ? "daal with rice" : "a spiced lentil soup";
+    else if (has("eggs") && (has("onion") || has("chili") || has("tomato"))) dish = "a masala omelette";
+    else if (has("rice") && has("eggs")) dish = "egg fried rice";
+    else if (has("potatoes")) dish = "aloo bhaji with whatever's left";
+    else if (has("chicken")) dish = "pan chicken with onion and chili";
+    else if (has("bread")) dish = "loaded toast";
+    out.replaceChildren(board([["Found", pick.join(", ")], ["Tonight", dish]]));
+  }
+  draw();
+  return h("div", null, h("p", {class:"small"}, "I cook with whatever's in the pantry. Open it and see what dinner becomes."),
+    h("div", {class:"links"}, h("button", {class:"btn", type:"button", onclick:draw}, "Open the pantry")), out);
+}
+function wDesk(){
+  const kids = [h("p", {class:"small"}, "My desk: camera, editing monitor, and a few Premiere timelines. This is where I edit what I shoot for the College of Science.")];
+  if (CONFIG.photos.length) kids.push(h("div", {class:"photos"}, CONFIG.photos.map((src,i) => h("img", {src, alt:"Photo "+(i+1)+" by Sajid", loading:"lazy"}))));
+  return h("div", null, kids);
+}
+function wHouse(){
+  const panes = {"Scent shelf": wScent, "Kitchen": wKitchen, "Desk": wDesk};
+  const body = h("div"), tabs = h("div", {class:"tabs", role:"tablist"});
+  function sel(n){ for (const b of tabs.children) b.setAttribute("aria-selected", String(b.textContent === n)); body.replaceChildren(panes[n]()); }
+  for (const n of Object.keys(panes)) tabs.append(h("button", {class:"btn ghost tab", type:"button", role:"tab", onclick:() => sel(n)}, n));
+  sel("Scent shelf");
+  return h("div", {class:"w"}, tabs, body);
+}
+
+function wFish(){
+  const F = [["Pandas",6],["NumPy",6],["SQL",6],["Python",6],["Plotly",5],["Streamlit",5],["Power BI",3],["PostgreSQL",3],["scikit-learn",3],["ChromaDB",3],["SHAP",1.5],["XGBoost",0.6]];
+  const total = F.reduce((s,f) => s+f[1], 0);
+  const out = h("p", {class:"small"}, "The pond is full of skills. Cast a line."), btn = h("button", {class:"btn", type:"button"}, "Cast");
+  let n = 0;
+  btn.addEventListener("click", () => {
+    btn.disabled = true; out.textContent = "Waiting for a bite...";
+    setTimeout(() => {
+      let r = Math.random()*total, f = F[0];
+      for (const x of F) { r -= x[1]; if (r <= 0) { f = x; break; } }
+      const tier = f[1] >= 5 ? "common" : f[1] >= 3 ? "uncommon" : f[1] >= 1 ? "rare" : "legendary";
+      n++; out.textContent = "You caught: " + f[0] + " (" + tier + "). Catches so far: " + n + ".";
+      btn.disabled = false;
+    }, reduceMotion ? 50 : 900);
+  });
+  return h("div", {class:"w"}, h("div", {class:"links"}, btn), out);
+}
+
+function wSkillSet(list){
+  const used = sk => ITEMS.filter(it => it.kind==="building" && it.tags && it.tags.some(tg => tg.toLowerCase()===sk.toLowerCase() || (sk==="Groq" && tg==="Groq API"))).map(it => it.title.replace(/ \(in progress\)/,""));
+  return h("div", {class:"w"}, h("div", {class:"skills"}, list.map(sk => { const u=used(sk); return h("div", {class:"slot"}, h("div", null, sk), u.length ? h("div", {class:"small", style:"margin-top:4px"}, "Used in: " + u.join(", ")) : null); })));
+}
+let audioCtx = null;
+function playTune(){
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523,659,784,659,587,698,880,698,659,784,988,784,1047,988,880,784], now = audioCtx.currentTime;
+    notes.forEach((f,i) => { const o=audioCtx.createOscillator(), g=audioCtx.createGain(), st=now+i*0.16; o.type="square"; o.frequency.value=f; g.gain.setValueAtTime(0.0001,st); g.gain.exponentialRampToValueAtTime(0.05,st+0.01); g.gain.exponentialRampToValueAtTime(0.0001,st+0.15); o.connect(g); g.connect(audioCtx.destination); o.start(st); o.stop(st+0.16); });
+  } catch(e) {}
+  const c = byId.club; for (let i=0;i<6;i++) setTimeout(() => hearts.push({x:c.markX-12+Math.random()*24, y:c.markY+4, life:1.6, note:true}), i*400);
+}
+function wSocial(classicMode){
+  const clean = u => u.replace(/^mailto:/,"").replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,"");
+  const rows = [["LinkedIn",CONFIG.linkedin],["GitHub",CONFIG.github],["YouTube",CONFIG.social.youtube],["Instagram",CONFIG.social.instagram],["X",CONFIG.social.x]].filter(([,u]) => u);
+  const kids = rows.map(([name,url]) => h("div", {class:"social"}, h("span", {class:"social-name"}, name), h("span", {class:"social-url"}, clean(url)), h("a", {class:"btn", href:url, target:"_blank", rel:"noopener"}, "Open")));
+  const copy = h("button", {class:"btn ghost", type:"button"}, "Copy");
+  copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(CONFIG.email); copy.textContent="Copied"; } catch(e) { copy.textContent="Select it above"; } });
+  kids.push(h("div", {class:"social"}, h("span", {class:"social-name"}, "Email"), h("span", {class:"social-url"}, CONFIG.email), h("a", {class:"btn", href:"mailto:"+CONFIG.email}, "Write"), copy));
+  if (!classicMode) kids.push(h("div", {class:"links", style:"margin-top:12px"}, h("button", {class:"btn ghost", type:"button", onclick:playTune}, "Play the jukebox")));
+  return h("div", {class:"w"}, kids);
+}
+function wChar(){
+  const p = CONFIG.personal;
+  const kids = [board([["Class","Information Systems student"],["Base","Arlington, TX"],["Graduates",CONFIG.gradDate],["Main quest","Summer 2027 internship"]])];
+  if (p.likes.length) kids.push(h("p", {class:"group-title"}, "Likes"), h("ul", {class:"list"}, p.likes.map(x => h("li", null, x))));
+  if (p.dislikes.length) kids.push(h("p", {class:"group-title"}, "Dislikes"), h("ul", {class:"list"}, p.dislikes.map(x => h("li", null, x))));
+  if (p.chill) kids.push(h("p", {class:"group-title"}, "How I chill"), h("p", null, p.chill));
+  return h("div", null, kids);
+}
+
+/* ===================== Content ===================== */
+const ITEMS = [
+  {id:"welcome", kind:"object", obj:"sign", tx:36, ty:12, count:false, verb:"read the sign", d:"Projects",
+   title:"Welcome to the city",
+   text:"Hi, I'm Sajid. I study Information Systems at UT Arlington and build data and AI projects. This city is my portfolio, and each building is one piece of it. Walk with the arrow keys or WASD and press E at a door. Press T for a quick tour, M for the map, I for my skills, and C for my character card. The city has five areas: Projects up north, Skills and Education in the middle, and Experience and Home down south across the river. People around town have things to say, and my Camry is parked by my house if you want to drive it. On a phone, tap wherever you want to go.",
+   links:[["Start the tour","#tour"],["Show classic view","#classic"]]},
+
+  {id:"irop", kind:"building", style:"terminal", label:"GATE A", x:8, y:7, w:12, h:6, verb:"enter Gate A", d:"Projects",
+   title:"IROP Command Center",
+   text:"My main project. It runs on 611,575 real U.S. flights from June 2025, predicts which ones are likely to run late, traces how one delay spreads through the same aircraft's later flights, and ranks who to rebook first when a flight is cancelled. Almost half of all delay time comes from delays already in motion, so the model follows the plane and not just the flight. Passenger data isn't public, so that layer uses synthetic manifests and says so.",
+   stats:[["Model ROC-AUC","0.747"],["Flights analyzed","611,575"],["Delay from late aircraft, U.S.","40.6%"],["Same, around Dallas","46.3%"],["Tail-number tracking validated","99.3%"],["Extra delay behind a 30+ min late plane","69 min"]],
+   widget:wCascade, tags:["Python","pandas","scikit-learn","Streamlit","OpenSky API","Open-Meteo"],
+   links:[["View code",code("irop")],["Open dashboard",live("iropDemo")]]},
+
+  {id:"weather", kind:"building", style:"weather", label:"WX", x:27, y:9, w:4, h:4, verb:"enter the weather station", d:"Projects",
+   title:"Weather Pipeline",
+   text:"An hourly pipeline that pulls weather for Dallas, Arlington, and Fort Worth from Open-Meteo. It saves the raw JSON first, cleans it into PostgreSQL, adds rolling features, and trains a Prophet model that forecasts temperature on a live Streamlit dashboard. The last piece left is one entry script that runs the whole cycle.",
+   widget:wWeather, tags:["Python","PostgreSQL","SQLAlchemy","APScheduler","Prophet","Streamlit"],
+   links:[["View code",code("weather")]]},
+
+  {id:"churn", kind:"building", style:"bank", label:"BANK", x:42, y:6, w:8, h:7, verb:"enter the bank", d:"Projects",
+   title:"Bank Customer Churn Intelligence",
+   text:"An end-to-end churn project on 10,000 bank customers. Python handles cleaning, SMOTE balancing, and an XGBoost model explained with SHAP. A four-page Power BI dashboard turns the scores into risk segments and dollars at risk. Customers holding three or four products almost always left, and German customers churned at twice the rate of French and Spanish ones.",
+   stats:[["Accuracy","84.25%"],["AUC","0.859"],["High-risk customers flagged","1,677"],["Deposits at risk","$152.97M"]],
+   widget:wChurn, tags:["Python","XGBoost","SHAP","SMOTE","Power BI","DAX"],
+   links:[["View code",code("churn")]]},
+
+  {id:"campuspos", kind:"building", style:"shop", label:"SHOP", x:53, y:7, w:7, h:6, verb:"enter the shop", d:"Projects",
+   title:"CampusPOS",
+   text:"A point-of-sale web app for small shops, built end to end over five phases. It takes payments through Stripe, including QR code checkout with Payment Links, handles billing and refunds, emails receipts, and stores product photos.",
+   tags:["Next.js","TypeScript","Supabase","Stripe","Resend"], links:[["View code",code("campuspos")]]},
+
+  {id:"finance", kind:"building", style:"office", label:"LEDGER", x:63, y:5, w:8, h:8, verb:"enter the office", d:"Projects",
+   title:"Personal Finance Agent",
+   text:"A finance assistant that runs entirely on my own machine, so statements never leave it. It reads PDF and CSV bank statements, sorts transactions into categories, and merges merchant names so every AutoZone location counts as one AutoZone. I tested it on real Amex statements.",
+   tags:["Python","SQLite","pdfplumber","Ollama","Streamlit"], links:[["View code",code("finance")]]},
+
+  {id:"sql", kind:"building", style:"library", label:"LIBRARY", x:4, y:18, w:9, h:7, verb:"enter the library", d:"Projects",
+   title:"Text-to-SQL Assistant",
+   text:"Ask a question in plain English and get SQL, a results table, and a chart back. Llama 3.3 70B writes the query from the live database schema, and a four-stage check blocks anything that isn't a single safe SELECT before it touches the retail database.",
+   widget:wSQL, tags:["Python","Groq","Llama 3.3 70B","SQLite","Streamlit","Plotly"], links:[["View code",code("sql")]]},
+
+  {id:"geograph", kind:"building", style:"observatory", label:"OBSERVATORY", x:15, y:18, w:7, h:7, verb:"enter the observatory", d:"Projects",
+   title:"GeoGraph",
+   text:"Paste news headlines and GeoGraph pulls out the countries, companies, and governments involved, then links them by oil, water, tech, military, finance, or sanctions with a tension score. It draws the result as an interactive graph with each entity nested inside its city, state, and country. A UTA management professor's point that students graduate without understanding geopolitics started it. Plain JavaScript and a hand-built SVG renderer, no frameworks.",
+   tags:["JavaScript","SVG","Groq","Llama 3.3 70B","GitHub Pages"], links:[["Open app",live("geographLive")],["View code",code("geograph")]]},
+
+  {id:"ats", kind:"building", style:"kiosk", label:"CAREERS", x:24, y:20, w:5, h:5, verb:"visit the career kiosk", d:"Projects",
+   title:"University Resume ATS Analyzer",
+   text:"A resume reviewer for students. Paste a resume and, if you want, a job description, and it returns an AI-estimated ATS-style score, keywords found and missing, and feedback for each section. It's a coach, not a real applicant tracking system, and it says so.",
+   tags:["React","LLM API","SVG"], links:[["Open it",live("ats")]]},
+
+  {id:"pi", kind:"building", style:"shack", label:"SERVER", x:31, y:21, w:5, h:4, verb:"enter the server shed", d:"Projects",
+   title:"Raspberry Pi Server",
+   text:"A headless Linux server on a Raspberry Pi that I set up and run over SSH, with Ubuntu Server 24.04 and a static IP through netplan. Firewall rules, Apache, and monitoring are next. The terminal below is a toy, but go ahead and poke at it.",
+   widget:wTerm, tags:["Raspberry Pi","Ubuntu Server","SSH","netplan","Linux"], links:[["Setup notes",live("pi")]]},
+
+  {id:"multiagent", kind:"building", style:"printshop", label:"PRINT", x:63, y:18, w:7, h:7, verb:"enter the print shop", d:"Projects",
+   title:"Multi-Agent Report Generator (in progress)",
+   text:"Upload a CSV or Excel file and five AI agents take turns: one reads the data, one analyzes it, one draws charts, one writes the narrative, and one assembles a seven-page PDF report. All five agents work. The orchestrator that chains them and the Streamlit front end come next.",
+   stats:[["Ingestion agent","done"],["Analysis agent","done"],["Chart agent","done"],["Narrative agent","done"],["PDF agent","done"],["Orchestrator","next"],["Streamlit UI","next"]],
+   tags:["Python","Groq","pandas","matplotlib","fpdf2"], links:[["View code",code("multiagent")]]},
+
+  {id:"site", kind:"building", style:"site", label:"SITE", x:72, y:19, w:5, h:6, verb:"check the construction site", d:"Projects",
+   title:"Coming soon",
+   text:"Three more projects are built and waiting on deployment: an AI sales analytics dashboard on the Superstore dataset with a chat tab, a job market analyzer that groups postings by skill with K-means, and an AI resume writer that drafts four tailored versions and scores the match. They go live on Streamlit Cloud as I finish deploying them.",
+   tags:["Python","Streamlit","scikit-learn","Groq","Plotly"]},
+
+  {id:"club", kind:"building", style:"club", label:"SOCIAL CLUB", x:41, y:48, w:8, h:6, verb:"enter the Social Club", d:"Home and social",
+   title:"The Social Club",
+   text:"This is where my links live. If you're hiring for a Summer 2027 internship or want to talk about any project in this city, reach out here. The jukebox works, too.",
+   widget:() => wSocial(), staticWidget:() => wSocial(true)},
+
+  {id:"dojo", kind:"building", style:"dojo", label:"CODE DOJO", x:11, y:33, w:6, h:6, verb:"enter the Code Dojo", d:"Skills",
+   title:"Code Dojo: languages",
+   text:"Where the languages train. Python and SQL do most of the work across my projects, and JavaScript runs GeoGraph and this whole city.",
+   widget:() => wSkillSet(SKILL_SETS.dojo), staticWidget:() => wSkillSet(SKILL_SETS.dojo)},
+  {id:"lab", kind:"building", style:"lab", label:"DATA LAB", x:18, y:33, w:6, h:6, verb:"enter the Data Lab", d:"Skills",
+   title:"Data Lab: analytics, ML, and BI",
+   text:"Cleaning, modeling, explaining, and showing data. These are the tools behind the churn, supply chain, and flight delay work.",
+   widget:() => wSkillSet(SKILL_SETS.lab), staticWidget:() => wSkillSet(SKILL_SETS.lab)},
+  {id:"ailab", kind:"building", style:"ailab", label:"AI LAB", x:25, y:33, w:6, h:6, verb:"enter the AI Lab", d:"Skills",
+   title:"AI Lab: LLMs and systems",
+   text:"Language models, retrieval, and the machines they run on. Most of my AI projects use Llama 3.3 70B through Groq.",
+   widget:() => wSkillSet(SKILL_SETS.ailab), staticWidget:() => wSkillSet(SKILL_SETS.ailab)},
+  {id:"studio", kind:"building", style:"studio", label:"STUDIO", x:32, y:33, w:6, h:6, verb:"enter the Creative Studio", d:"Skills",
+   title:"Creative Studio",
+   text:"Photo and video are part of my job at the College of Science, and design skills show up in every dashboard I build.",
+   widget:() => wSkillSet(SKILL_SETS.studio), staticWidget:() => wSkillSet(SKILL_SETS.studio)},
+
+  {id:"supply", kind:"building", style:"yard", label:"PORT", x:41, y:18, w:9, h:7, verb:"enter the container yard", d:"Projects",
+   title:"Supply Chain Risk Intelligence Platform",
+   text:"A risk platform built around DFW-style supply chains. It pulls seven macroeconomic series from FRED and freight news from five RSS feeds, builds 40 risk features, and scores each month with a Random Forest explained by SHAP. Everything lands in PostgreSQL and shows on a four-page Streamlit dashboard. It flagged February 2026 as high risk, driven mostly by producer and import prices.",
+   stats:[["Monthly records","97"],["Risk features","40"],["News articles scored","127"],["Feb 2026 risk score","59.9 / 100"]],
+   tags:["Python","FRED API","PostgreSQL","scikit-learn","SHAP","Streamlit"], links:[["View code",code("supply")]]},
+
+  {id:"rag", kind:"building", style:"depot", label:"DEPOT", x:52, y:19, w:9, h:6, verb:"enter the depot", d:"Projects",
+   title:"Logistics RAG Assistant",
+   text:"An assistant for freight paperwork. It indexes documents like bills of lading, rate sheets, and shipping procedures into ChromaDB, finds the five most relevant passages for a question, and has Llama 3.3 70B answer with citations to the source file.",
+   tags:["Python","LangChain","ChromaDB","Groq","Llama 3.3 70B","Streamlit"], links:[["View code",code("rag")]]},
+
+  {id:"about", kind:"building", style:"hall", label:"UTA HALL", x:41, y:32, w:10, h:7, verb:"enter the hall", d:"Education",
+   title:"About me",
+   text:"I'm an Information Systems student at UT Arlington, graduating in " + CONFIG.gradDate + ", in the Honors College. I'm looking for Summer 2027 internships in data analytics, business analytics, AI/ML, and software engineering, especially in airline tech and around DFW.",
+   stats:[["GPA","3.8"],["President's List","2 times"],["Certifications","36"]],
+   tags:["Intro to MIS","Programming (CSE 1310)","Calculus I","Micro and Macroeconomics"],
+   links:[["Resume",CONFIG.resume],["LinkedIn",CONFIG.linkedin]]},
+
+  {id:"science", kind:"building", style:"science", label:"SCIENCE", x:30, y:49, w:7, h:6, verb:"enter the science building", d:"Experience",
+   title:"Student Technical Assistant, UTA College of Science",
+   text:"My current job, since September 2025. I shoot photos and video for College of Science events, research projects, and campaigns, then edit them in Photoshop and Premiere Pro. I also handle technical support during live events and keep the media files organized so content ships on time.",
+   widget:wDesk, tags:["Photography","Videography","Photoshop","Premiere Pro"]},
+
+  {id:"museum", kind:"building", style:"museum", label:"MUSEUM", x:54, y:32, w:9, h:7, verb:"enter the museum", d:"Education",
+   title:"Trophy museum",
+   text:"Before college I competed in science olympiads. The medals came from the International Biogenesis Olympiad in 2023. In the back room sits my Enigma machine simulator, rebuilt here so you can try it.",
+   widget:() => h("div", null, wMedals(), wEnigma()), staticWidget:wMedals},
+
+  {id:"records", kind:"building", style:"records", label:"RECORDS", x:66, y:33, w:7, h:6, verb:"enter the records office", d:"Education",
+   title:"Certifications",
+   text:"Thirty-six certifications so far, grouped here by who issued them.",
+   widget:wCerts, staticWidget:wCerts},
+
+  {id:"market", kind:"building", style:"market", label:"BAZAAR", x:11, y:50, w:7, h:5, verb:"visit the bazaar", d:"Experience",
+   title:"E-commerce Specialist, CM Work Solutions",
+   text:"From 2020 to 2022 I worked part-time in e-commerce in Dhaka. I handled product sourcing, listings, pricing, inventory, and order fulfillment, managed customers through a CRM, and tracked conversion rate, average order value, and acquisition cost to decide what to change next.",
+   tags:["E-commerce","CRM","Market research","KPI tracking"]},
+
+  {id:"community", kind:"building", style:"community", label:"PURNOTA", x:23, y:49, w:7, h:6, verb:"enter the community center", d:"Experience",
+   title:"Treasurer, Purnota Foundation",
+   text:"I served as treasurer of Purnota Foundation, a social services organization, from 2022 to 2025."},
+
+  {id:"tea", kind:"object", obj:"tea", tx:18, ty:52, count:false, verb:"stop at the tea stall", d:"Experience",
+   title:"Tea stall", text:"A cup of cha from the corner stall. Every street in Dhaka seems to have one."},
+
+  {id:"house", kind:"building", style:"house", label:"HOME", x:52, y:47, w:9, h:7, verb:"go inside", d:"Home and social",
+   title:"My place",
+   text:"Off the clock. Check the scent shelf, raid the kitchen, or look at my desk.",
+   widget:wHouse},
+
+  {id:"garage", kind:"building", style:"garage", label:"GARAGE", x:63, y:49, w:6, h:5, verb:"open the garage", d:"Home and social",
+   title:"The garage",
+   text:"I do the maintenance on my 2007 Camry myself: brakes, parking brake, oil analysis, and a misfire that took some chasing. Try that one yourself.",
+   widget:wMisfire},
+
+  {id:"fishing", kind:"object", obj:"rod", tx:73, ty:55, count:false, verb:"go fishing", d:"Home and social",
+   title:"Fishing spot", text:"Nothing here is a real fish.", widget:wFish},
+
+  {id:"bench", kind:"object", obj:"bench", tx:76, ty:56, count:false, verb:"sit on the bench", d:"Home and social",
+   title:"The bench",
+   text:""}
+];
+const CHAR = {id:"me", title:"Character card", text:"That's me. Here's the short version.", widget:wChar};
+const TOUR = ["irop","churn","supply","sql","about"];
+const DISTRICTS = [["Projects","irop"],["Skills","lab"],["Education","about"],["Experience","market"],["Home and social","club"]];
+const AREAS = [
+  {name:"Projects", test:(x,y)=>y<=28, rect:[2,2,76,26], color:"#3f7fd0"},
+  {name:"Skills", test:(x,y)=>y<=44 && x<=38, rect:[2,30,36,14], color:"#7a52b8"},
+  {name:"Education", test:(x,y)=>y<=44, rect:[40,30,38,14], color:"#2f9a6a"},
+  {name:"Experience", test:(x,y)=>x<=38, rect:[2,46,36,12], color:"#e0873a"},
+  {name:"Home and social", test:()=>true, rect:[40,46,38,12], color:"#d64561"}
+];
+const areaAt = (px,py) => { const x=Math.floor(px/T), y=Math.floor(py/T); return AREAS.find(a => a.test(x,y)); };
+const SKILL_SETS = {
+  dojo: ["Python","SQL","JavaScript","HTML and CSS","C++","Java","MATLAB"],
+  lab: ["pandas","NumPy","scikit-learn","XGBoost","SHAP","SMOTE","Prophet","Plotly","Power BI","DAX","Excel","PostgreSQL","SQLite","Streamlit"],
+  ailab: ["Groq","Llama 3.3 70B","LangChain","ChromaDB","RAG","Ollama","Linux","Ubuntu Server","SSH","Raspberry Pi","Arduino"],
+  studio: ["Photography","Videography","Photoshop","Illustrator","Premiere Pro"]
+};
+const SKILLS = {
+  "Languages": ["Python","SQL","JavaScript","HTML and CSS","C++","Java","MATLAB"],
+  "Data and ML": ["pandas","NumPy","scikit-learn","XGBoost","SHAP","SMOTE","Prophet","Plotly"],
+  "BI and databases": ["Power BI","DAX","Excel","PostgreSQL","SQLite","Streamlit"],
+  "AI and LLMs": ["Groq API","Llama 3.3 70B","LangChain","ChromaDB","RAG","Prompt design"],
+  "Systems": ["Linux","Ubuntu Server","SSH","Raspberry Pi","Arduino","Networking basics"],
+  "Creative": ["Photography","Videography","Photoshop","Illustrator","Premiere Pro"]
+};
+
+/* ===================== World ===================== */
+const T=16, MW=80, MH=60, WW=MW*T, WH=MH*T, SPEED=74;
+const GRASS=0, PATH=1, WATER=2, TREE=3, TARMAC=4, DOCK=5, BRICK=6;
+const map = new Uint8Array(MW*MH), reserved = new Uint8Array(MW*MH);
+const inb = (x,y) => x>=0 && y>=0 && x<MW && y<MH;
+const at = (x,y) => inb(x,y) ? map[y*MW+x] : TREE;
+const setT = (x,y,v) => { if (inb(x,y)) map[y*MW+x]=v; };
+const fill = (x0,y0,x1,y1,v) => { for (let y=y0;y<=y1;y++) for (let x=x0;x<=x1;x++) setT(x,y,v); };
+const reserve = (x0,y0,x1,y1) => { for (let y=y0;y<=y1;y++) for (let x=x0;x<=x1;x++) if (inb(x,y)) reserved[y*MW+x]=1; };
+const isRoad = v => v===PATH || v===BRICK || v===DOCK || v===TARMAC;
+
+const buildings = ITEMS.filter(i => i.kind==="building");
+const objects = ITEMS.filter(i => i.kind==="object");
+const counted = ITEMS.filter(i => i.count!==false);
+const byId = Object.fromEntries(ITEMS.map(i => [i.id,i]));
+for (const b of buildings) { b.dx = b.x+Math.floor(b.w/2); b.sx = b.dx*T+8; b.sy = (b.y+b.h)*T+12; }
+for (const o of objects) { o.sx = o.tx*T+8; o.sy = (o.ty+1)*T+12; }
+
+function buildMap(){
+  for (let y=0;y<MH;y++) for (let x=0;x<MW;x++) if (x<2 || x>=MW-2 || y<2 || y>=MH-2) setT(x,y,TREE);
+  fill(3,3,36,5,TARMAC);
+  fill(2,30,9,57,WATER);
+  fill(10,46,37,47,WATER);
+  for (let ty=48; ty<58; ty++) for (let tx=66; tx<78; tx++) { const ex=(tx+.5-73.5)/3.3, ey=(ty+.5-52.3)/2.5; if (ex*ex+ey*ey<1) setT(tx,ty,WATER); }
+  fill(2,14,77,15,PATH); fill(2,28,77,29,PATH); fill(10,44,77,45,PATH); fill(38,2,39,57,PATH);
+  fill(40,55,72,56,PATH);
+  fill(20,46,21,47,DOCK); fill(20,48,21,54,BRICK); fill(10,55,37,56,BRICK);
+  fill(6,36,9,37,DOCK);
+  for (const b of buildings) { let r=b.y+b.h, g=0; while (!isRoad(at(b.dx,r)) && g++<12) { setT(b.dx,r,PATH); r++; } }
+  for (const b of buildings) reserve(b.x-1, b.y-3, b.x+b.w, b.y+b.h);
+  for (const o of objects) reserve(o.tx-1, o.ty-1, o.tx+1, o.ty+2);
+  for (let y=0;y<MH;y++) for (let x=0;x<MW;x++) { const v=at(x,y); if (v!==GRASS && v!==TREE) reserve(x-1,y-1,x+1,y+1); }
+  reserve(1,2,37,7);
+  let s = 11;
+  const rng = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let q = Math.imul(s ^ s>>>15, 1|s); q = q + Math.imul(q ^ q>>>7, 61|q) ^ q; return ((q ^ q>>>14)>>>0)/4294967296; };
+  for (let y=2;y<MH-2;y++) for (let x=2;x<MW-2;x++) if (at(x,y)===GRASS && !reserved[y*MW+x] && rng()<0.07) setT(x,y,TREE);
+}
+const inBuilding = (tx,ty) => buildings.some(b => tx>=b.x && tx<b.x+b.w && ty>=b.y && ty<b.y+b.h);
+const solidTile = (tx,ty) => { const v=at(tx,ty); return v===WATER || v===TREE || (inb(tx,ty) && decoSolid[ty*MW+tx]===1) || objects.some(o => o.tx===tx && o.ty===ty); };
+let walk;
+function buildWalk(){ walk = new Uint8Array(MW*MH); for (let y=0;y<MH;y++) for (let x=0;x<MW;x++) walk[y*MW+x] = (!solidTile(x,y) && !inBuilding(x,y)) ? 1 : 0; }
+function blocked(x,y,hw=5,hh=5){
+  const l=x-hw, r=x+hw, t2=y-hh, b=y;
+  if (!player.driving && car.x!=null) { const [a1,b1,a2,b2]=carRect(car.x,car.y,car.face); if (r>a1 && l<a2 && b>b1 && t2<b2) return true; }
+  if (l<0 || t2<0 || r>=WW || b>=WH) return true;
+  for (let ty=Math.floor(t2/T); ty<=Math.floor(b/T); ty++) for (let tx=Math.floor(l/T); tx<=Math.floor(r/T); tx++) if (solidTile(tx,ty)) return true;
+  for (const B of buildings) { const X=B.x*T, Y=B.y*T; if (r>X && l<X+B.w*T && b>Y && t2<Y+B.h*T) return true; }
+  return false;
+}
+
+/* ===================== World art (GBA-style 3/4 view) ===================== */
+const OUTLINE = "#1f2233";
+const mkLayer = () => { const c=document.createElement("canvas"); c.width=WW; c.height=WH; return c; };
+const wc = mkLayer(), w = wc.getContext("2d");
+const bl = mkLayer(), tl = mkLayer(), oc = mkLayer();
+const bctx = bl.getContext("2d"), tctx = tl.getContext("2d");
+let g0 = w;
+const R = (c,x,y,ww,hh) => { g0.fillStyle=c; g0.fillRect(x,y,ww,hh); };
+function hash(x,y,i){ let q = Math.imul(x,374761393) ^ Math.imul(y,668265263) ^ Math.imul(i+1,-2048144777); q = Math.imul(q ^ (q>>>13), 1274126177); return ((q ^ (q>>>16))>>>0)/4294967296; }
+function disc(cx,cy,r,c,upperOnly){ for (let dy=-r; dy<=(upperOnly?0:r); dy++) for (let dx=-r; dx<=r; dx++) if (dx*dx+dy*dy <= r*r+r*0.8) R(c,cx+dx,cy+dy,1,1); }
+function outlineLayer(cv){
+  const c=cv.getContext("2d"), W=cv.width, H=cv.height, img=c.getImageData(0,0,W,H), d=img.data, a=new Uint8Array(W*H);
+  for (let i=0;i<W*H;i++) a[i] = d[i*4+3]>128 ? 1 : 0;
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+    const i=y*W+x; if (a[i]) continue;
+    if ((x>0 && a[i-1]) || (x<W-1 && a[i+1]) || (y>0 && a[i-W]) || (y<H-1 && a[i+W])) { d[i*4]=31; d[i*4+1]=34; d[i*4+2]=51; d[i*4+3]=255; }
+  }
+  c.putImageData(img,0,0);
+}
+
+function tGrass(tx,ty){
+  const X=tx*T, Y=ty*T, patch = hash(tx>>2,ty>>2,9) < 0.35;
+  R(patch ? "#63bf5a" : "#68c35d",X,Y,T,T);
+  if (hash(tx,ty,31)<0.5) { for (let k=0;k<6;k++) R(patch?"#5bb653":"#60bb58", X+Math.floor(hash(tx,ty,k+80)*15), Y+Math.floor(hash(tx,ty,k+90)*15), 2, 1); }
+  for (let i=0;i<2;i++) { const px=X+1+Math.floor(hash(tx,ty,i)*12), py=Y+2+Math.floor(hash(tx,ty,i+20)*12); R("#48a04a",px,py+1,1,1); R("#48a04a",px+1,py,1,1); R("#48a04a",px+2,py+1,1,1); R("#8fd978",px+1,py-1,1,1); }
+  for (let i=0;i<3;i++) R("#93db7c", X+Math.floor(hash(tx,ty,i+40)*16), Y+Math.floor(hash(tx,ty,i+50)*16), 1, 1);
+  if (!reserved[ty*MW+tx] && hash(tx,ty,99)<0.09) {
+    const c=["#ffffff","#ff7aa2","#ffd23f","#8fb8ff","#c38cff"][Math.floor(hash(tx,ty,98)*5)], px=X+3+Math.floor(hash(tx,ty,97)*9), py=Y+4+Math.floor(hash(tx,ty,96)*8);
+    R("#3d9a43",px+1,py+2,1,2); R(c,px,py,3,2); R(c,px+1,py-1,1,1); R("#ffe27a",px+1,py,1,1);
+  }
+}
+function edges(tx,ty,self,c,wid){
+  const X=tx*T, Y=ty*T, s = v => v===self;
+  if (!s(at(tx,ty-1))) R(c,X,Y,T,wid); if (!s(at(tx,ty+1))) R(c,X,Y+T-wid,T,wid);
+  if (!s(at(tx-1,ty))) R(c,X,Y,wid,T); if (!s(at(tx+1,ty))) R(c,X+T-wid,Y,wid,T);
+}
+function tPath(tx,ty){
+  const X=tx*T, Y=ty*T;
+  R("#ecc98a",X,Y,T,T);
+  for (let i=0;i<5;i++) R(hash(tx,ty,i+5)<.5?"#d4ac6c":"#f7e0b0", X+Math.floor(hash(tx,ty,i+1)*15), Y+Math.floor(hash(tx,ty,i+30)*15), 1, 1);
+  if (hash(tx,ty,77)<.25) { const px=X+3+Math.floor(hash(tx,ty,78)*9), py=Y+3+Math.floor(hash(tx,ty,79)*9); R("#c2b8a6",px,py,2,2); R("#e6dfd0",px,py,1,1); R("#958b7a",px+1,py+1,1,1); }
+  const X2=X+T-1, Y2=Y+T-1, s=v=>v===PATH;
+  if (!s(at(tx,ty-1))) { R("#b98e52",X,Y,T,1); R("#d9b378",X,Y+1,T,1); }
+  if (!s(at(tx,ty+1))) { R("#f7e0b0",X,Y2-1,T,1); R("#b98e52",X,Y2,T,1); }
+  if (!s(at(tx-1,ty))) { R("#b98e52",X,Y,1,T); R("#d9b378",X+1,Y,1,T); }
+  if (!s(at(tx+1,ty))) { R("#d9b378",X2-1,Y,1,T); R("#b98e52",X2,Y,1,T); }
+}
+function tWater(tx,ty){
+  const X=tx*T, Y=ty*T;
+  R("#3b9be0",X,Y,T,T);
+  if (hash(tx>>1,ty>>1,4)<0.4) R("#3592d8",X,Y+8,T,8);
+  for (let i=0;i<2;i++) { const px=X+Math.floor(hash(tx,ty,i+3)*10), py=Y+3+Math.floor(hash(tx,ty,i+8)*10); R("#9ad8fb",px,py,4,1); R("#2f80c8",px+1,py+1,3,1); }
+  const shore = v => v===WATER || v===DOCK;
+  const sand="#f2dca0", foam="#e6f6ff", deep="#2d7cc4";
+  if (!shore(at(tx,ty-1))) { R(sand,X,Y,T,2); R(foam,X,Y+2,T,1); R(deep,X,Y+3,T,1); }
+  if (!shore(at(tx,ty+1))) { R(foam,X,Y+T-3,T,1); R(sand,X,Y+T-2,T,2); }
+  if (!shore(at(tx-1,ty))) { R(sand,X,Y,2,T); R(foam,X+2,Y,1,T); }
+  if (!shore(at(tx+1,ty))) { R(foam,X+T-3,Y,1,T); R(sand,X+T-2,Y,2,T); }
+}
+const TREE_PAL = {
+  green:  ["#46a85a","#358a47","#2a7039","#6ccc70","#a4e88e"],
+  bloom:  ["#f59cbc","#dc7399","#b8567a","#ffc6da","#fff0f5"],
+  autumn: ["#f2a13e","#d8802b","#b0621f","#ffc86e","#ffe6ae"],
+  pine:   ["#2f9a62","#23784c","#1a5c3b","#52bb7c","#86dca4"]
+};
+function tTree(tx,ty){
+  const X=tx*T, Y=ty*T;
+  tGrass(tx,ty);
+  R("rgba(40,30,90,.3)",X+1,Y+12,15,4);
+  const sv=g0; g0=tctx;
+  const r=hash(tx,ty,5), kind = r<0.10 ? "bloom" : r<0.2 ? "autumn" : r<0.34 ? "pine" : "green", [base,dark,darker,hi,hi2] = TREE_PAL[kind];
+  R("#7a5234",X+6,Y+7,4,8); R("#5a3a22",X+9,Y+7,1,8); R("#9a6c46",X+6,Y+7,1,8); R("#7a5234",X+5,Y+14,6,1);
+  if (kind==="pine") {
+    for (let dy=-13; dy<=8; dy++) {
+      const tier=(dy+13)%7, half=Math.min(8, Math.floor(((dy+13)/21)*7)+Math.floor(tier*0.8));
+      for (let dx=-half; dx<=half; dx++) {
+        let c=base; if (dx>half/3) c=dark; if (tier===6 || dy>5) c=darker; if (dx<-half/2 && tier<4) c=hi; if (dx<-half/1.4 && tier<2) c=hi2;
+        R(c,X+8+dx,Y-1+dy,1,1);
+      }
+    }
+  } else {
+    for (let dy=-10; dy<=8; dy++) for (let dx=-9; dx<=9; dx++) {
+      const e=(dx/8.7)**2+((dy+1)/9.3)**2;
+      if (e>=1) continue;
+      let c=base;
+      if (dy>5 || (dx*0.5+dy)>5) c=darker; else if ((dx*0.6+dy)>1) c=dark;
+      if ((dx+dy*1.1)<-8 && e<0.55) c=hi;
+      if ((dx+dy*1.1)<-11 && e<0.35) c=hi2;
+      R(c,X+8+dx,Y-1+dy,1,1);
+    }
+    for (let i=0;i<4;i++) R(darker, X+3+Math.floor(hash(tx,ty,i+60)*10), Y-6+Math.floor(hash(tx,ty,i+61)*10), 1, 1);
+    if (kind==="green" && hash(tx,ty,70)<0.3) for (let i=0;i<3;i++) R("#e0443a", X+4+Math.floor(hash(tx,ty,i+71)*8), Y-4+Math.floor(hash(tx,ty,i+74)*8), 1, 1);
+  }
+  g0=sv;
+}
+function tTarmac(tx,ty){
+  const X=tx*T, Y=ty*T;
+  R("#50555e",X,Y,T,T);
+  for (let i=0;i<3;i++) R("#5d636d", X+Math.floor(hash(tx,ty,i)*15), Y+Math.floor(hash(tx,ty,i+7)*15), 1, 1);
+  if (ty===4 && tx%3===0) R("#f2efe4",X+2,Y+7,12,2);
+  if (at(tx,ty-1)!==TARMAC) R("#f2efe4",X,Y+2,T,1);
+  if (at(tx,ty+1)!==TARMAC) R("#f2efe4",X,Y+13,T,1);
+  if (tx===4 && ty!==4) for (let k=0;k<4;k++) R("#f2efe4",X+2+k*3,Y+5,2,6);
+}
+function tDock(tx,ty){
+  const X=tx*T, Y=ty*T;
+  R("#a8794c",X,Y,T,T);
+  for (let yy=3; yy<T; yy+=4) { R("#7f5a38",X,Y+yy,T,1); R("#c29062",X,Y+yy-3,T,1); }
+  if (at(tx-1,ty)===WATER) R("#5e4128",X,Y,2,T);
+  if (at(tx+1,ty)===WATER) R("#5e4128",X+T-2,Y,2,T);
+}
+function tBrick(tx,ty){
+  const X=tx*T, Y=ty*T;
+  R("#c06a4f",X,Y,T,T);
+  for (let yy=0; yy<T; yy+=4) { R("#96513c",X,Y+yy,T,1); R("#d27f62",X,Y+yy+1,T,1); for (let xx=((yy/4)%2)*4; xx<T; xx+=8) R("#96513c",X+xx,Y+yy,1,4); }
+}
+
+const STY = {
+  terminal:{roof:"#3f7fd0",roofHi:"#6aa2ea",roofLo:"#2c5ea3",wall:"#eef3fa",wallLo:"#c3cfe0",door:"#9fdcff",frame:"#4a6a94",glass:"#9fdcff",dw:18},
+  weather: {roof:"#e0873a",roofHi:"#f5a55e",roofLo:"#b8672a",wall:"#f3f1ea",wallLo:"#cfcabb",door:"#4a6a94",frame:"#2e4466",glass:"#9fdcff",dw:10,dh:14},
+  bank:    {roof:"#2f9a6a",roofHi:"#4fc08a",roofLo:"#217250",wall:"#f5ecd6",wallLo:"#d8c9a4",door:"#5a3a22",frame:"#3a2414",glass:"#9fdcff"},
+  shop:    {roof:"#e2553f",roofHi:"#f57a62",roofLo:"#b33c2b",wall:"#ffe8a8",wallLo:"#e0c47c",door:"#7a4a2a",frame:"#4a2c1b",glass:"#9fdcff"},
+  office:  {roof:"#3a4f8a",roofHi:"#5670b0",roofLo:"#283a68",wall:"#5f9ad6",wallLo:"#4a7cb5",door:"#c9ecff",frame:"#223660",glass:"#c9ecff",rr:.2},
+  library: {roof:"#7a52b8",roofHi:"#9a73d6",roofLo:"#5a3a8c",wall:"#efe0c0",wallLo:"#d0bc92",door:"#5a3a22",frame:"#3a2414",glass:"#9fdcff"},
+  observatory:{roof:"#b9c3d3",roofHi:"#e0e7f0",roofLo:"#8d98aa",wall:"#f1ede3",wallLo:"#cdc6b4",door:"#3b3f62",frame:"#23263a",glass:"#9fdcff",rr:.5,dome:true},
+  kiosk:   {roof:"#24306a",roofHi:"#3a4a94",roofLo:"#182048",wall:"#33418a",wallLo:"#24306a",door:"#f0c040",frame:"#9a7a20",glass:"#fff8e6"},
+  shack:   {roof:"#3a3f5a",roofHi:"#545b80",roofLo:"#262a40",wall:"#6a7194",wallLo:"#4f5577",door:"#2a2e44",frame:"#16182a",glass:"#10131f"},
+  printshop:{roof:"#6f8a9c",roofHi:"#8faabb",roofLo:"#536c7c",wall:"#dfe6ea",wallLo:"#b8c3ca",door:"#6a4128",frame:"#3a2616",glass:"#9fdcff"},
+  post:    {roof:"#2f6fd0",roofHi:"#5a92ea",roofLo:"#2152a3",wall:"#fff1d6",wallLo:"#e0cda4",door:"#2152a3",frame:"#16306a",glass:"#9fdcff"},
+  depot:   {roof:"#6a7a82",roofHi:"#8898a0",roofLo:"#4f5c63",wall:"#a9b6bd",wallLo:"#8a979e",door:"#f0b43a",frame:"#9a7420",glass:"#9fdcff",dw:28,dh:20,roll:true},
+  hall:    {roof:"#b84a3a",roofHi:"#d86a56",roofLo:"#8c3326",wall:"#de9a6e",wallLo:"#bb7a50",door:"#5a3a22",frame:"#3a2414",glass:"#9fdcff",dw:14},
+  science: {roof:"#1f8fb0",roofHi:"#45b0d0",roofLo:"#166c86",wall:"#f2f0e8",wallLo:"#cfcbbd",door:"#166c86",frame:"#0f4a5c",glass:"#9fdcff"},
+  museum:  {roof:"#8a6a4f",roofHi:"#a88868",roofLo:"#6a503a",wall:"#fbf5e8",wallLo:"#ddd3bd",door:"#5a3a22",frame:"#3a2414",glass:"#9fdcff"},
+  records: {roof:"#4f9a5a",roofHi:"#6fbc78",roofLo:"#3a7844",wall:"#ecdcba",wallLo:"#cdb98f",door:"#5a3a22",frame:"#3a2414",glass:"#9fdcff"},
+  market:  {roof:"#22a05a",roofHi:"#3cc47a",roofLo:"#177a42",wall:"#e0b574",wallLo:"#c0944f",door:"#7a4a2a",frame:"#4a2c1b",glass:"#9fdcff",rr:.3},
+  community:{roof:"#d05a36",roofHi:"#ea7a54",roofLo:"#a54226",wall:"#f5d8a8",wallLo:"#d6b47e",door:"#22a05a",frame:"#177a42",glass:"#9fdcff"},
+  house:   {roof:"#4a78c0",roofHi:"#6a98dc",roofLo:"#355a96",wall:"#fff0d8",wallLo:"#e0cda8",door:"#c0443a",frame:"#7a2620",glass:"#9fdcff"},
+  garage:  {roof:"#6a6a72",roofHi:"#85858e",roofLo:"#505058",wall:"#d4ccbe",wallLo:"#b3aa9a",door:"#eee6d6",frame:"#8a8274",glass:"#9fdcff",dw:36,dh:22,roll:true},
+  dojo:    {roof:"#c8413b",roofHi:"#e35a4a",roofLo:"#8c2a26",wall:"#f5ecd6",wallLo:"#d8c9a4",door:"#3a2414",frame:"#2a1d14",glass:"#fff2c0"},
+  lab:     {roof:"#1fa3a3",roofHi:"#45c4c4",roofLo:"#157a7a",wall:"#f4f8fa",wallLo:"#cfd9de",door:"#157a7a",frame:"#0f4a4a",glass:"#9fdcff"},
+  ailab:   {roof:"#7a52b8",roofHi:"#9a73d6",roofLo:"#5a3a8c",wall:"#2a3260",wallLo:"#1d2340",door:"#5ff0ff",frame:"#1a8a9a",glass:"#5ff0ff"},
+  studio:  {roof:"#f28a2e",roofHi:"#ffa85a",roofLo:"#c0661a",wall:"#fff1d6",wallLo:"#e0cda4",door:"#2a2e40",frame:"#1a1d2a",glass:"#9fdcff"},
+  club:    {roof:"#d64561",roofHi:"#f06a84",roofLo:"#a33048",wall:"#3a2a4a",wallLo:"#2a1d36",door:"#ffd66e",frame:"#9a6a20",glass:"#ffd66e"},
+  yard:    {lot:true}, site:{lot:true}
+};
+function windowRow(b,S,y,ww,hh,step,dw,arched,curtain){
+  const X=b.x*T, W=b.w*T, dcx=b.dx*T+8;
+  for (let cx=X+8; cx+ww<X+W-6; cx+=step) {
+    if (Math.abs(cx+ww/2-dcx) < dw/2+ww/2+4) continue;
+    R(S.frame,cx-1,y-1,ww+2,hh+2); R(S.glass,cx,y,ww,hh); R("#e6f4fb",cx,y,ww,1);
+    R("#d8eef8",cx+1,y+1,2,1); R("#d8eef8",cx+1,y+2,1,1); R("rgba(0,0,0,.12)",cx+ww-2,y+1,2,hh-1);
+    R("#f7f4ec",cx-2,y+hh+1,ww+4,1); R("rgba(0,0,0,.18)",cx-2,y+hh+2,ww+4,1);
+    if (arched) { R(S.wall,cx-1,y-1,2,2); R(S.wall,cx+ww-1,y-1,2,2); }
+    if (curtain) { R("#c8413b",cx,y,2,hh); R("#c8413b",cx+ww-2,y,2,hh); R("#6a9a52",cx-1,y+hh+1,ww+2,2); R("#e98fa0",cx+1,y+hh,1,1); R("#f6c85f",cx+ww-2,y+hh,1,1); }
+  }
+}
+function columns(X,W,wt,H,Y,rh){
+  const step=(W-24)/3;
+  for (let i=0;i<4;i++) { const c=Math.round(10+i*step); R("#f7f4ec",X+c,wt+4,5,H-rh-7); R("#cfc8b8",X+c+4,wt+4,1,H-rh-7); R("#f7f4ec",X+c-1,wt+2,7,2); R("#f7f4ec",X+c-1,Y+H-5,7,2); }
+}
+const ACC = {
+  terminal(b,S,X,Y,W,H,rh,wt){
+    R(S.frame,X+4,wt+5,W-8,12); R(S.glass,X+5,wt+6,W-10,10);
+    for (let mx=X+12; mx<X+W-6; mx+=8) R(S.frame,mx,wt+6,1,10);
+    R("#c9e6f5",X+6,wt+7,W-12,1);
+    R("#b7bec9",X+14,Y-12,8,14); R("#9aa3ad",X+20,Y-12,2,14);
+    R("#374f6d",X+11,Y-22,14,3); R(S.glass,X+12,Y-19,12,6); R(S.frame,X+12,Y-19,12,1); R("#374f6d",X+11,Y-13,14,1); R(S.frame,X+17,Y-27,1,5);
+  },
+  weather(b,S,X,Y,W,H,rh,wt){
+    R(S.frame,X+5,wt+6,10,8); R(S.glass,X+6,wt+7,8,6);
+    R("#8a98a6",X+W-10,Y-22,2,24); R("#8a98a6",X+W-14,Y-12,10,1);
+    b.anemo = {x:X+W-9, y:Y-24};
+  },
+  bank(b,S,X,Y,W,H,rh,wt,dcx){ columns(X,W,wt,H,Y,rh); R("#d8d2c4",dcx-14,Y+H-3,28,3); },
+  shop(b,S,X,Y,W,H,rh,wt,dcx,dw){
+    windowRow(b,S,wt+14,16,14,24,dw);
+    for (let sx=X+2, i=0; sx<X+W-2; sx+=4, i++) { const c=i%2?"#f2e8cf":"#c8453a"; R(c,sx,wt,4,6); R(c,sx+1,wt+6,2,1); }
+  },
+  office(b,S,X,Y,W,H,rh,wt,dcx,dw){
+    for (let yy=wt+4; yy+6<Y+H-20; yy+=9) for (let xx=X+5; xx+6<X+W-3; xx+=9) { R(S.frame,xx-1,yy-1,8,8); R(S.glass,xx,yy,6,6); R("#e6f4fb",xx,yy,2,1); }
+    R("#c9a84c",X+W-8,Y-10,2,10); R("#c8413b",X+W-7,Y-11,1,1);
+  },
+  library(b,S,X,Y,W,H,rh,wt,dcx,dw){
+    windowRow(b,S,wt+8,8,16,16,dw,true);
+    R("#43365b",X+6,wt+2,W-12,2);
+  },
+  observatory(b,S,X,Y,W,H,rh,wt,dcx){
+    const r=Math.min(W/2-8, rh-2), cx=X+Math.floor(W/2), cy=wt;
+    for (let dy=-r; dy<=0; dy++) for (let dx=-r; dx<=r; dx++) if (dx*dx+dy*dy <= r*r+r*0.8) R(dx<-r/3?S.roofHi:dx>r/3?S.roofLo:S.roof, cx+dx, cy+dy, 1, 1);
+    R("#23263a",cx-2,cy-r+2,4,r-2);
+    R("#5a6598",cx+3,cy-r+6,8,3);
+    R(S.frame,X+5,wt+8,8,8); R(S.glass,X+6,wt+9,6,6); R(S.frame,X+W-13,wt+8,8,8); R(S.glass,X+W-12,wt+9,6,6);
+  },
+  kiosk(b,S,X,Y,W,H,rh,wt){ R("#c9a84c",X,wt+2,W,3); R("#c9a84c",X,Y+2,W,1); R(S.frame,X+6,wt+10,10,8); R(S.glass,X+7,wt+11,8,6); },
+  shack(b,S,X,Y,W,H,rh,wt){
+    R(S.frame,X+8,wt+7,14,13); R(S.glass,X+9,wt+8,12,11);
+    for (let k=0;k<3;k++) { R("#2b3350",X+10,wt+9+k*3,10,2); R("#5fdc7a",X+11,wt+9+k*3,1,1); R("#f6c85f",X+13,wt+9+k*3,1,1); }
+    R("#9aa3a8",X+W-12,Y-14,1,14); R("#9aa3a8",X+W-15,Y-10,7,1); R("#9aa3a8",X+W-14,Y-6,5,1);
+    b.led = {x:X+W-13, y:Y-16};
+  },
+  printshop(b,S,X,Y,W,H,rh,wt,dcx,dw){
+    windowRow(b,S,wt+8,10,10,20,dw);
+    R("#e0873a",X+3,Y-6,2,H+4); R("#e0873a",X+W-5,Y-6,2,H+4); R("#c9a34a",X+1,wt+22,W-2,2); R("#c9a34a",X+1,Y+4,W-2,2);
+    for (let i=0;i<W/6;i++) R(i%2?"#1d2340":"#f6c85f",X+i*6,Y+rh-4,6,3);
+    R("#e0873a",dcx+10,Y+H+1,3,4); R("#f2e8cf",dcx+10,Y+H+2,3,1);
+  },
+  post(b,S,X,Y,W,H,rh,wt,dcx,dw){ windowRow(b,S,wt+10,12,10,20,dw); R("#3f64a8",X,wt+3,W,3); R("#c8413b",X,wt+6,W,1); },
+  depot(b,S,X,Y,W,H,rh,wt,dcx,dw){ for (let xx=X+3; xx<X+W-2; xx+=3) R(S.wallLo,xx,wt+2,1,H-rh-5); windowRow(b,S,wt+6,10,6,26,dw); },
+  hall(b,S,X,Y,W,H,rh,wt,dcx,dw){
+    for (let yy=wt+3, rw=0; yy<Y+H-4; yy+=4, rw++) { R(S.wallLo,X+1,yy,W-2,1); for (let xx=X+1+(rw%2?4:0); xx<X+W-1; xx+=8) R(S.wallLo,xx,yy+1,1,3); }
+    windowRow(b,S,wt+9,8,16,18,dw,true);
+    const cy=Y+Math.round(rh/2)-4; disc(dcx,cy,7,S.roofLo); disc(dcx,cy,6,"#f2e8cf"); R("#1d2340",dcx,cy-4,1,5); R("#1d2340",dcx,cy,3,1);
+  },
+  science(b,S,X,Y,W,H,rh,wt,dcx,dw){ windowRow(b,S,wt+5,10,8,16,dw); windowRow(b,S,wt+20,10,8,16,dw); disc(X+14,Y+10,4,"#dfe3ea"); R("#8a939e",X+14,Y+10,1,6); },
+  museum(b,S,X,Y,W,H,rh,wt){ columns(X,W,wt,H,Y,rh); R("#c9a84c",X,Y+rh-4,W,1); },
+  records(b,S,X,Y,W,H,rh,wt,dcx,dw){ windowRow(b,S,wt+8,10,10,18,dw); R("#b8a98c",X+4,wt+2,W-8,1); },
+  market(b,S,X,Y,W,H,rh,wt,dcx,dw){
+    for (let sx=X, i=0; sx<X+W; sx+=4, i++) { const c=i%2?"#f2e8cf":"#2e7d4f"; R(c,sx,wt,4,7); R(c,sx+1,wt+7,2,1); }
+    const goods=["#e0644f","#f6c85f","#6a9a52","#e98fa0","#f08a3a"];
+    for (let gx=X+4, i=0; gx<X+W-4; gx+=5, i++) { if (Math.abs(gx+2-dcx)<dw/2+4) continue; R("#8a6238",gx-1,wt+18,5,6); R(goods[i%5],gx,wt+16,3,3); }
+  },
+  community(b,S,X,Y,W,H,rh,wt,dcx,dw){ for (let xx=X+2; xx<X+W-2; xx+=4) R(S.roofLo,xx,Y+2,1,rh-5); windowRow(b,S,wt+10,10,10,20,dw); },
+  house(b,S,X,Y,W,H,rh,wt,dcx,dw){ R("#8a5a44",X+W-20,Y-9,8,12); R("#6b4636",X+W-21,Y-10,10,2); windowRow(b,S,wt+10,12,10,22,dw,false,true); },
+  dojo(b,S,X,Y,W,H,rh,wt,dcx,dw){ windowRow(b,S,wt+8,6,10,12,dw); R(S.roofLo,X-5,Y+rh-7,4,3); R(S.roofLo,X+W+1,Y+rh-7,4,3); R("#e0443a",X+4,wt+4,4,7); R("#f6c85f",X+5,wt+5,2,5); R("#e0443a",X+W-8,wt+4,4,7); R("#f6c85f",X+W-7,wt+5,2,5); },
+  lab(b,S,X,Y,W,H,rh,wt,dcx,dw){ windowRow(b,S,wt+7,8,9,14,dw); R("#9fdcff",X+W-12,Y+6,6,8); R("#5fdc7a",X+W-11,Y+10,4,4); R("#cfd9de",X+W-10,Y+3,2,3); },
+  ailab(b,S,X,Y,W,H,rh,wt,dcx,dw){ R("#5ff0ff",X,wt+2,W,1); windowRow(b,S,wt+7,8,8,14,dw); disc(X+12,Y+8,4,"#cfd4dc"); R("#8a939e",X+12,Y+8,1,6); R("#ff5ad0",X+W-10,Y+4,3,3); },
+  studio(b,S,X,Y,W,H,rh,wt,dcx,dw){ windowRow(b,S,wt+7,8,9,14,dw); R("#2a2e40",X+W-18,Y+5,12,8); disc(X+W-12,Y+9,2,"#9fdcff"); R("#e0443a",X+W-8,Y+6,2,1); },
+  club(b,S,X,Y,W,H,rh,wt,dcx,dw){
+    for (let sx=X, i=0; sx<X+W; sx+=4, i++) { const c=i%2?"#ff5ad0":"#7a52b8"; R(c,sx,wt,4,5); R(c,sx+1,wt+5,2,1); }
+    windowRow(b,S,wt+12,10,10,20,dw); R("#ff5ad0",X+1,Y+H-5,W-2,1); R("#5ff0ff",X+1,wt+7,W-2,1);
+  },
+  garage(b,S,X,Y,W,H,rh,wt){ R(S.frame,X+W-14,wt+4,9,7); R(S.glass,X+W-13,wt+5,7,5); }
+};
+const LOT = {
+  yard(b,X,Y,W,H,dcx){
+    R("#9aa0a4",X,Y,W,H);
+    for (let i=0;i<8;i++) R("#8a9094",X+Math.floor(hash(b.x,i,1)*W),Y+Math.floor(hash(b.y,i,2)*H),6,1);
+    const cols=["#c8413b","#3f64a8","#e0873a","#2e7d4f","#6d5b4a","#5a6598"];
+    for (let r=0;r<3;r++) for (let c=0;c<4;c++) { const cx=X+8+c*20, cy=Y+10+r*14, col=cols[(r*4+c)%6]; R(col,cx,cy,17,9); for (let k=2;k<17;k+=3) R("rgba(0,0,0,.18)",cx+k,cy,1,9); R("rgba(255,255,255,.2)",cx,cy,17,1); }
+    R("#c8413b",X+W-30,Y-22,3,H+14); R("#c8413b",X+W-12,Y-22,3,H+14); R("#c8413b",X+W-36,Y-24,32,4); R("#1d2340",X+W-20,Y-20,1,18); R("#f6c85f",X+W-22,Y-2,5,3);
+    R("#5a5f63",X,Y,W,1); R("#5a5f63",X,Y,1,H); R("#5a5f63",X+W-1,Y,1,H); R("#5a5f63",X,Y+H-1,dcx-X-10,1); R("#5a5f63",dcx+10,Y+H-1,X+W-dcx-10,1);
+  },
+  site(b,X,Y,W,H,dcx){
+    R("#b89a6a",X,Y,W,H);
+    for (let i=0;i<10;i++) R("#a3885c",X+Math.floor(hash(b.x,i,3)*W),Y+Math.floor(hash(b.y,i,4)*H),3,2);
+    R("#9aa0a4",X+24,Y+12,W-40,H-30); R("#7d8387",X+24,Y+12,W-40,2);
+    for (let k=X+28; k<X+W-18; k+=6) R("#8a5a44",k,Y+14,1,H-34);
+    R("#e0b030",X+12,Y-30,4,H+26); for (let yy=Y-28; yy<Y+H-6; yy+=4) R("#8c7131",X+12,yy,4,1);
+    R("#e0b030",X+4,Y-32,W-8,3); R("#5a5f63",X+2,Y-33,7,6); R("#1d2340",X+W-14,Y-29,1,22); R("#f6c85f",X+W-16,Y-8,5,3);
+    R("#b3834f",X+W-22,Y+H-16,14,4); R("#b3834f",X+W-20,Y+H-20,10,4);
+    for (let k=X; k<X+W; k+=6) { if (Math.abs(k-dcx)<12) continue; R("#8a6a44",k,Y,2,H); }
+    R("#8a6a44",X,Y+2,W,1); R("#8a6a44",X,Y+H-6,dcx-X-12,1); R("#8a6a44",dcx+12,Y+H-6,X+W-dcx-12,1);
+    for (let i=0;i<4;i++) R(i%2?"#f2e8cf":"#c8413b",dcx-12+i*6,Y+H-4,6,3);
+  }
+};
+
+function drawBuilding(b){
+  const S=STY[b.style], X=b.x*T, Y=b.y*T, W=b.w*T, H=b.h*T, dcx=b.dx*T+8;
+  g0=w; R("rgba(40,30,90,.32)",X+2,Y+H-2,W+5,6); R("rgba(40,30,90,.24)",X+W+2,Y+6,4,H);
+  g0=bctx;
+  let rh;
+  if (S.lot) { rh=H-13; LOT[b.style](b,X,Y,W,H,dcx); }
+  else {
+    rh = Math.round(H*(S.rr||0.42));
+    const wt=Y+rh, dw=S.dw||12, dh=S.dh||16, ov=2;
+    R(S.wall,X,wt,W,H-rh);
+    for (let yy=Y+H-12; yy<Y+H-4; yy++) for (let xx=X+((yy)%2); xx<X+W; xx+=2) R(S.wallLo,xx,yy,1,1);
+    R(S.wallLo,X,wt,W,2); R("rgba(40,30,90,.18)",X,wt+2,W,2);
+    R(S.wallLo,X+W-3,wt,3,H-rh); R("rgba(255,255,255,.18)",X,wt,2,H-rh);
+    R(S.wallLo,X,Y+H-4,W,4); R("rgba(0,0,0,.18)",X,Y+H-4,W,1);
+    if (!S.dome) {
+      R(S.roofLo,X-ov,Y,W+ov*2,rh);
+      R(S.roof,X-ov,Y,W+ov*2,rh-4);
+      R(S.roofHi,X-ov,Y,W+ov*2,3); R("rgba(255,255,255,.3)",X-ov,Y,W+ov*2,1);
+      for (let yy=Y+3; yy<Y+6; yy++) for (let xx=X-ov+(yy%2); xx<X+W+ov; xx+=2) R(S.roofHi,xx,yy,1,1);
+      for (let yy=Y+rh-9; yy<Y+rh-4; yy++) for (let xx=X-ov+(yy%2); xx<X+W+ov; xx+=2) R(S.roofLo,xx,yy,1,1);
+      for (let yy=Y+6, r=0; yy<Y+rh-5; yy+=4, r++) {
+        R(S.roofLo,X-ov,yy,W+ov*2,1);
+        for (let xx=X-ov+(r%2?3:0); xx<X+W+ov; xx+=6) R(S.roofLo,xx,yy-3,1,3);
+      }
+      R(S.roofLo,X-ov,Y+rh-4,W+ov*2,4); R("rgba(0,0,0,.25)",X-ov,Y+rh-1,W+ov*2,1);
+    }
+    ACC[b.style](b,S,X,Y,W,H,rh,wt,dcx,dw);
+    R(S.frame,dcx-dw/2-1,Y+H-dh-1,dw+2,dh+1); R(S.door,dcx-dw/2,Y+H-dh,dw,dh); R("rgba(255,255,255,.2)",dcx-dw/2,Y+H-dh,dw,1);
+    if (b.style==="terminal") { R(S.frame,dcx,Y+H-dh,1,dh); R("#e6f4fb",dcx-7,Y+H-dh+1,2,6); }
+    else if (S.roll) { for (let yy=Y+H-dh+2; yy<Y+H; yy+=3) R(S.frame,dcx-dw/2,yy,dw,1); }
+    else { R("rgba(0,0,0,.2)",dcx-dw/2+2,Y+H-dh+2,dw-4,5); R("#f6c85f",dcx+3,Y+H-8,1,1); }
+    R("#d8d2c4",dcx-dw/2-2,Y+H-2,dw+4,2);
+  }
+  g0.font = "8px Silkscreen, ui-monospace, monospace"; g0.textBaseline = "top";
+  const tw=Math.ceil(g0.measureText(b.label).width), bw=tw+8, bh=10, sx=Math.round(dcx-bw/2), sy=Y+rh-bh-3;
+  R("#8a6238",sx,sy,bw,bh+1); R("#f7f1e1",sx,sy,bw,bh); R("#d9cfb4",sx,sy+bh-1,bw,1);
+  g0.fillStyle = "#1d2340"; g0.fillText(b.label, sx+4, sy+1);
+  b.markX = dcx; b.markY = sy-10;
+  g0=w;
+}
+function drawObject(o){
+  const X=o.tx*T, Y=o.ty*T;
+  g0=w; R("rgba(40,30,90,.3)",X+2,Y+13,12,3);
+  g0=bctx;
+  if (o.obj==="sign") { R("#6b4a2f",X+7,Y+8,2,8); R("#8a6238",X+1,Y+1,14,10); R("#c79a62",X+2,Y+2,12,7); R("#dcb07a",X+2,Y+2,12,1); R("#8a6238",X+4,Y+4,8,1); R("#8a6238",X+4,Y+6,6,1); }
+  else if (o.obj==="tea") { R("#6b4a2f",X+1,Y+4,2,12); R("#6b4a2f",X+13,Y+4,2,12); for (let i=0;i<4;i++) R(i%2?"#f2e8cf":"#c8413b",X+i*4,Y+1,4,4); R("#8a6238",X+1,Y+9,14,4); R("#a8794c",X+1,Y+9,14,1); R("#f2e8cf",X+4,Y+7,2,2); R("#f2e8cf",X+9,Y+7,2,2); R("#c4a063",X+6,Y+7,2,2); }
+  else if (o.obj==="rod") { R("#a8794c",X+2,Y+8,12,6); R("#7f5a38",X+2,Y+11,12,1); R("#6b4a2f",X+10,Y,1,9); R("#c9d2ee",X+10,Y-2,1,2); R("#c8413b",X+4,Y+6,3,2); }
+  else if (o.obj==="bench") { R("#6b4a2f",X+2,Y+11,2,5); R("#6b4a2f",X+12,Y+11,2,5); R("#b8864f",X+1,Y+8,14,3); R("#b8864f",X+1,Y+3,14,3); R("#d9a46a",X+1,Y+3,14,1); R("#7f5a38",X+1,Y+6,14,1); }
+  o.markX = X+8; o.markY = Y-10;
+  g0=w;
+}
+const decos = [], decoSolid = new Uint8Array(MW*MH);
+function buildDeco(){
+  const free = (x,y) => inb(x,y) && at(x,y)===GRASS && !decoSolid[y*MW+x] && !objects.some(o=>o.tx===x&&o.ty===y) && !inBuilding(x,y) && !buildings.some(b=>b.dx===x && b.y+b.h===y);
+  const add = (x,y,kind) => { if (!free(x,y)) return; decos.push({tx:x,ty:y,kind}); decoSolid[y*MW+x]=1; };
+  for (const b of buildings) {
+    add(b.x-1, b.y+b.h-1, "bush"); add(b.x+b.w, b.y+b.h-1, "bush");
+    if (!STY[b.style].lot && b.style!=="garage") { add(b.dx-2, b.y+b.h, "bed"); add(b.dx+2, b.y+b.h, "bed"); }
+  }
+  const force = (x,y,kind,extra) => { if (!inb(x,y) || decoSolid[y*MW+x]) return; decos.push({tx:x,ty:y,kind,...(extra||{})}); decoSolid[y*MW+x]=1; };
+  for (const [x,y] of [[35,17],[43,17]]) force(x,y,"archpost");
+  force(50,52,"cathouse");
+  for (const [x,y,text,color] of [[26,17,"PROJECTS","#3f7fd0"],[23,31,"SKILLS","#7a52b8"],[52,31,"EDUCATION","#2f9a6a"],[15,48,"EXPERIENCE","#e0873a"],[66,47,"HOME & SOCIAL","#d64561"]]) force(x,y,"areasign",{text,color});
+  for (const [x,y] of [[37,13],[41,13],[37,27],[41,27],[37,43],[41,43]]) add(x,y,"tlight");
+  for (const [bx,cx,rows] of [[2,3,[14,15]],[77,76,[14,15]],[2,3,[28,29]],[77,76,[28,29]],[10,11,[44,45]],[77,76,[44,45]],[10,11,[55,56]]])
+    for (const y of rows) { force(bx,y,"barrier"); force(cx,y,"cone"); }
+  for (const [by,cy] of [[2,3],[57,56]]) for (const x of [38,39]) { force(x,by,"barrier"); force(x,cy,"cone"); }
+  const mc2 = document.createElement("canvas").getContext("2d"); mc2.font = "8px Silkscreen, ui-monospace, monospace";
+  for (const d of decos) if (d.kind==="areasign") {
+    const bw = Math.ceil(mc2.measureText(d.text).width)+12, bx = d.tx*T+8-Math.floor(bw/2);
+    for (let cx=Math.floor(bx/T); cx<=Math.floor((bx+bw-1)/T); cx++) {
+      for (const ry of [d.ty-1, d.ty]) if (at(cx,ry)===TREE) setT(cx,ry,GRASS);
+      if (at(cx,d.ty)===GRASS) decoSolid[d.ty*MW+cx] = 1;
+    }
+  }
+  for (const row of [13,27,43]) for (let x=5; x<76; x+=7) add(x,row,"lamp");
+  for (let x=12; x<35; x+=8) add(x,57,"lamp");
+}
+function drawDeco(d){
+  const X=d.tx*T, Y=d.ty*T;
+  g0=w; R("rgba(40,30,90,.3)",X+1,Y+12,14,4);
+  g0=bctx;
+  if (d.kind==="bush") {
+    const cols=hash(d.tx,d.ty,3)<0.5 ? ["#4fb05a","#3a8f47","#2c733a","#7fd27a"] : ["#58b865","#419a50","#307a3f","#8fdc86"];
+    for (let dy=-6; dy<=6; dy++) for (let dx=-7; dx<=7; dx++) {
+      const e=(dx/7.4)**2+(dy/6.4)**2, e2=((dx+3)/4.2)**2+((dy+4)/3.4)**2, e3=((dx-3)/4.2)**2+((dy+4)/3.4)**2;
+      if (e>=1 && e2>=1 && e3>=1) continue;
+      let c=cols[0]; if (dy>2 || dx+dy>5) c=cols[1]; if (dy>4) c=cols[2]; if (dx+dy<-6) c=cols[3];
+      R(c,X+8+dx,Y+9+dy,1,1);
+    }
+    const bc = hash(d.tx,d.ty,4)<0.5 ? "#ff7aa2" : "#ffd23f";
+    for (let i=0;i<3;i++) R(bc, X+4+Math.floor(hash(d.tx,d.ty,i+10)*8), Y+5+Math.floor(hash(d.tx,d.ty,i+13)*6), 1, 1);
+  } else if (d.kind==="bed") {
+    R("#8a5a36",X+1,Y+6,14,9); R("#6a4226",X+1,Y+13,14,2); R("#a8744a",X+1,Y+6,14,1); R("#5a3a22",X+2,Y+8,12,5);
+    const fc=["#ff5a6e","#ffd23f","#ff9ad0","#9a7aff","#ffffff","#ff8a3a"];
+    for (let r=0;r<2;r++) for (let k=0;k<4;k++) { const c=fc[(k+r*2+d.tx)%6], fx=X+3+k*3+(r?1:0), fy=Y+7+r*3; R("#3d9a43",fx+1,fy+1,1,2); R(c,fx,fy,3,2); R("#ffe27a",fx+1,fy,1,1); }
+  } else if (d.kind==="barrier") {
+    R("#3b3f58",X+2,Y+7,2,8); R("#3b3f58",X+12,Y+7,2,8); R("#2a2e40",X+1,Y+14,4,1); R("#2a2e40",X+11,Y+14,4,1);
+    for (let yy=0; yy<6; yy++) for (let xx=0; xx<16; xx++) R(((xx+yy)>>1)%2 ? "#f7f4ec" : "#e0443a", X+xx, Y+4+yy, 1, 1);
+    R("#2a2e40",X+7,Y+1,2,3); d.blink = {x:X+7, y:Y};
+  } else if (d.kind==="cone") {
+    for (let r=0; r<9; r++) { const wdt = 2 + Math.floor(r*0.75); R(r>=3 && r<=4 ? "#f7f4ec" : "#f28a2e", X+8-Math.ceil(wdt/2), Y+4+r, wdt, 1); }
+    R("#e06a1e",X+8,Y+6,2,7); R("#2a2e40",X+3,Y+13,10,2); R("#f28a2e",X+4,Y+13,8,1);
+  } else if (d.kind==="tlight") {
+    R("#3b3f58",X+7,Y-6,2,20); R("#5a6080",X+7,Y-6,1,20); R("#2a2e40",X+5,Y+13,6,2);
+    R("#23263a",X+4,Y-18,8,13); R("#3b3f58",X+4,Y-18,8,1);
+    for (let k=0;k<3;k++) R("#3a3a44",X+6,Y-16+k*4,4,3);
+    d.tl = {x:X+6, y:Y-16};
+  } else if (d.kind==="areasign") {
+    const sv = g0, m = document.createElement("canvas").getContext("2d"); m.font = "8px Silkscreen, ui-monospace, monospace";
+    const tw = Math.ceil(m.measureText(d.text).width), bw = tw+12, bh = 29, cv = document.createElement("canvas");
+    cv.width = bw+4; cv.height = bh+4; g0 = cv.getContext("2d");
+    const ox = 2, oy = 2, mid = ox+Math.floor(bw/2);
+    R("#6b4a2f",mid-9,oy+8,3,bh-8); R("#8a6238",mid-9,oy+8,1,bh-8); R("#6b4a2f",mid+6,oy+8,3,bh-8); R("#8a6238",mid+6,oy+8,1,bh-8);
+    R(darken(d.color,.7),ox,oy,bw,13); R(d.color,ox,oy,bw,12); R(darken(d.color,1.25),ox,oy,bw,1);
+    R("#f6c85f",ox+2,oy+2,2,2); R("#f6c85f",ox+bw-4,oy+2,2,2);
+    g0.font = "8px Silkscreen, ui-monospace, monospace"; g0.textBaseline = "top";
+    g0.fillStyle = darken(d.color,.55); g0.fillText(d.text,ox+6,oy+3); g0.fillStyle = "#fff8e6"; g0.fillText(d.text,ox+6,oy+2);
+    outlineLayer(cv);
+    d.spr = cv; d.sx = X+8-Math.floor(bw/2)-2; d.sy = Y+15-bh-2;
+    g0 = sv;
+    g0 = w; R("rgba(40,30,90,.3)", d.sx+4, Y+12, bw-4, 4); g0 = sv;
+  } else if (d.kind==="archpost") {
+    /* drawn on the arch layer */
+  } else if (d.kind==="cathouse") {
+    R("#a8794c",X+1,Y+5,14,10); R("#c29062",X+1,Y+5,14,1); R("#7f5a38",X+13,Y+5,2,10);
+    for (let r=0;r<6;r++) R(r<2?"#f07a8a":"#d64561", X+8-r-2, Y-1+r, (r+2)*2, 1);
+    R("#b8384f",X,Y+5,16,1);
+    R("#2a1d17",X+5,Y+9,6,6); R("#2a1d17",X+6,Y+8,4,1);
+    R("#f6c85f",X+2,Y+7,2,2); R("#ff5a7a",X+11,Y+7,1,1); R("#ff5a7a",X+13,Y+7,1,1); R("#ff5a7a",X+11,Y+8,3,1); R("#ff5a7a",X+12,Y+9,1,1);
+  } else {
+    R("#2a2e40",X+6,Y+13,4,2); R("#3b3f58",X+7,Y+2,2,12); R("#5a6080",X+7,Y+2,1,12);
+    R("#2a2e40",X+4,Y-2,8,2); R("#ffd66e",X+5,Y,6,3); R("#fff2c0",X+6,Y,2,1); R("#2a2e40",X+5,Y+3,6,1);
+    d.glow = {x:X+8, y:Y+1};
+  }
+  g0=w;
+}
+const treeTiles = [], waterTiles = [];
+function renderWorld(){
+  g0=w;
+  for (let ty=0;ty<MH;ty++) for (let tx=0;tx<MW;tx++) {
+    const v=at(tx,ty);
+    if (v===GRASS) tGrass(tx,ty); else if (v===PATH) tPath(tx,ty); else if (v===WATER) { tWater(tx,ty); waterTiles.push([tx,ty]); }
+    else if (v===TREE) { tTree(tx,ty); treeTiles.push([tx,ty]); } else if (v===TARMAC) tTarmac(tx,ty); else if (v===DOCK) tDock(tx,ty); else tBrick(tx,ty);
+  }
+  g0=w;
+  for (const row of [14,28,44]) for (const col of [37,40]) for (let yy=row*T+2; yy<(row+2)*T-2; yy+=4) R("#f7f1e1", col*T+2, yy, 12, 2);
+  for (const d of decos) drawDeco(d);
+  for (const o of objects) drawObject(o);
+  for (const b of buildings) drawBuilding(b);
+  outlineLayer(tl); outlineLayer(bl);
+  w.drawImage(tl,0,0); w.drawImage(bl,0,0);
+  const o = oc.getContext("2d"); o.drawImage(tl,0,0);
+  for (const [tx,ty] of treeTiles) o.clearRect(tx*T,ty*T,T,T);
+  const al = mkLayer(); g0 = al.getContext("2d");
+  const ax0=35*T+2, ax1=44*T-2, ay=17*T-38;
+  for (const px of [35*T+6, 43*T+6]) { R("#8a5a36",px,ay,5,17*T+15-ay); R("#b07a4a",px,ay,1,17*T+15-ay); R("#6a4226",px+4,ay,1,17*T+15-ay); R("#f6c85f",px-1,ay-4,7,4); R("#fff2b0",px,ay-4,2,1); }
+  R("#c8413b",ax0,ay+2,ax1-ax0,24); R("#e35a4a",ax0,ay+2,ax1-ax0,2); R("#9c2f2b",ax0,ay+23,ax1-ax0,3);
+  R("#f6c85f",ax0,ay+2,ax1-ax0,1); R("#f6c85f",ax0,ay+25,ax1-ax0,1); R("#f6c85f",ax0,ay+2,1,24); R("#f6c85f",ax1-1,ay+2,1,24);
+  g0.font="8px Silkscreen, ui-monospace, monospace"; g0.textBaseline="top"; g0.textAlign="center";
+  g0.fillStyle="#9c2f2b"; g0.fillText("WELCOME TO",(ax0+ax1)/2+1,ay+5); g0.fillText("SAJID'S PORTFOLIO",(ax0+ax1)/2+1,ay+15);
+  g0.fillStyle="#fff2c0"; g0.fillText("WELCOME TO",(ax0+ax1)/2,ay+4); g0.fillStyle="#f6c85f"; g0.fillText("SAJID'S PORTFOLIO",(ax0+ax1)/2,ay+14);
+  g0.textAlign="left";
+  const flags=["#3f7fd0","#f6c85f","#2f9a6a","#f7f4ec","#7a52b8"];
+  for (let fx=ax0+4, i=0; fx<ax1-6; fx+=8, i++) { const c=flags[i%5]; R(c,fx,ay+27,5,2); R(c,fx+1,ay+29,3,1); R(c,fx+2,ay+30,1,1); }
+  g0=w; outlineLayer(al); o.drawImage(al,0,0);
+}
+
+/* ===================== Screen, player, sprites ===================== */
+const canvas = document.getElementById("game"), ctx = canvas.getContext("2d");
+let scale=2, viewW=320, viewH=200;
+function resize(){
+  scale = Math.max(2, Math.floor(Math.min(innerWidth/420, innerHeight/260)));
+  viewW = Math.ceil(innerWidth/scale); viewH = Math.ceil(innerHeight/scale);
+  canvas.width=viewW; canvas.height=viewH; canvas.style.width=viewW*scale+"px"; canvas.style.height=viewH*scale+"px";
+  ctx.imageSmoothingEnabled = false;
+}
+addEventListener("resize", resize);
+const player = {x:39*T, y:15*T+12, face:"down", moving:false, anim:0, driving:false};
+const CAR_HOME = {x:62*T, y:56*T+14, face:"right"};
+const car = {...CAR_HOME};
+const carRect = (cx,cy,face) => (face==="left"||face==="right") ? [cx-11,cy-10,cx+11,cy] : [cx-6,cy-19,cx+6,cy];
+const cam = {x:0, y:0};
+const clamp = (v,a,b) => Math.max(a, Math.min(b,v));
+function updateCam(){
+  cam.x = WW<=viewW ? -Math.floor((viewW-WW)/2) : clamp(Math.round(player.x-viewW/2),0,WW-viewW);
+  cam.y = WH<=viewH ? -Math.floor((viewH-WH)/2) : clamp(Math.round(player.y-8-viewH/2),0,WH-viewH);
+}
+const sA=document.createElement("canvas"), sB=document.createElement("canvas");
+sA.width=sB.width=sA.height=sB.height=64;
+const aC=sA.getContext("2d"), bC=sB.getContext("2d");
+function outlined(g, x, y, draw){
+  aC.clearRect(0,0,64,64); draw(aC);
+  bC.globalCompositeOperation="source-over"; bC.clearRect(0,0,64,64);
+  for (const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) bC.drawImage(sA,dx,dy);
+  bC.globalCompositeOperation="source-in"; bC.fillStyle=OUTLINE; bC.fillRect(0,0,64,64); bC.globalCompositeOperation="source-over";
+  g.drawImage(sB,x,y); g.drawImage(sA,x,y);
+}
+const darken = (hex,f) => { const n=parseInt(hex.slice(1),16), c=v=>Math.max(0,Math.min(255,Math.round(v*f))); return "#"+((1<<24)|(c((n>>16)&255)<<16)|(c((n>>8)&255)<<8)|c(n&255)).toString(16).slice(1); };
+const PLAYER_PAL = {hair:"#2a1d17", skin:"#c68a5c", shirt:"#d64541", pants:"#2e3a5c"};
+function charSprite(a, ox, oy, c){
+  const f=c.face, flip=f==="left", side=f==="left"||f==="right", p=c.pal;
+  const step = c.moving ? Math.floor(c.anim*8)%2 : -1;
+  const P = (col,x,y,ww,hh) => { a.fillStyle=col; a.fillRect(flip ? ox+14-x-ww : ox+x, oy+y, ww, hh); };
+  const HAIR=p.hair, HAIRH=darken(p.hair,1.4), SKIN=p.skin, SKIND=darken(p.skin,.82), SHIRT=p.shirt, SHIRTD=darken(p.shirt,.76), PANTS=p.pants, SHOE="#1a1a22", EYE="#1f1712", BLUSH="#e0907a";
+  const by = step===1 ? -1 : 0;
+  const lx = side ? [5,7] : [4,8], lift=[step===1?1:0, step===0?1:0];
+  for (let i=0;i<2;i++) { const hh=4-lift[i]; P(PANTS,lx[i],15,2,hh); P(SHOE,lx[i],15+hh-1,2,1); }
+  P(SHIRT,3,10+by,8,6); P(SHIRTD,3,15+by,8,1);
+  if (!side) { P(SHIRTD,9,11+by,2,4); P("#f2e8cf",6,10+by,2,1); P(SHIRT,2,10+by,1,2); P(SHIRT,11,10+by,1,2); P(SKIN,2,12+by,1,2); P(SKIN,11,12+by,1,2); }
+  else { const sw = c.moving ? (step===0?-1:1) : 0; P(SHIRTD,6+sw,11+by,2,3); P(SKIN,6+sw,14+by,2,1); }
+  P(SKIN,2,3+by,10,7); P(SKIND,2,9+by,10,1); P(SKIND,11,4+by,1,5);
+  if (f==="up") { P(HAIR,1,by,12,9); P(HAIRH,3,1+by,4,1); P(HAIRH,2,2+by,1,3); }
+  else if (f==="down") { P(HAIR,1,by,12,4); P(HAIR,1,4+by,2,3); P(HAIR,11,4+by,2,3); P(HAIR,3,4+by,3,1); P(HAIR,8,4+by,3,1); P(HAIRH,3,1+by,4,1); P(EYE,4,6+by,1,2); P(EYE,9,6+by,1,2); P(BLUSH,3,8+by,1,1); P(BLUSH,10,8+by,1,1); }
+  else { P(HAIR,1,by,12,4); P(HAIR,1,4+by,5,4); P(HAIR,9,4+by,3,1); P(HAIRH,4,1+by,4,1); P(EYE,10,6+by,1,2); P(BLUSH,11,8+by,1,1); P(SKIN,12,6+by,1,1); }
+  if (c.style==="long") { if (f==="up") P(HAIR,1,9+by,12,3); else if (f==="down") { P(HAIR,1,7+by,2,5); P(HAIR,11,7+by,2,5); } else P(HAIR,1,8+by,5,4); }
+  if (c.style==="bun") { P(HAIR,5,by-2,4,3); P(HAIRH,6,by-2,2,1); }
+  if (c.beard && f!=="up") { if (side) P(HAIR,7,8+by,5,2); else P(HAIR,3,8+by,8,2); }
+  if (c.glasses && f==="down") { P("#2a2e44",3,6+by,3,1); P("#2a2e44",8,6+by,3,1); P("#2a2e44",6,6+by,2,1); }
+  if (c.glasses && side) P("#2a2e44",9,6+by,3,1);
+  if (c.style==="cap") { P(p.hat,1,by,12,3); P(darken(p.hat,1.35),3,by,4,1); if (f==="down") P(darken(p.hat,.7),2,3+by,10,1); else if (side) P(darken(p.hat,.7),9,3+by,5,1); }
+  if (c.style==="hardhat") { P(p.hat,1,by-1,12,4); P(darken(p.hat,1.25),3,by-1,4,1); P(darken(p.hat,.72),0,3+by,14,1); }
+  if (c.vest) { P("#f7f4ec",3,12+by,8,1); if (f!=="up") { P("#f7f4ec",4,10+by,1,5); P("#f7f4ec",9,10+by,1,5); } }
+  if (c.prop==="sign" && f!=="up") { P("#6b4a2f",12,2+by,1,14); P("#e0443a",10,-2+by,5,5); P("#f7f4ec",11,0+by,3,1); }
+  if (c.prop==="shovel" && f!=="up") { P("#8a6238",12,6+by,1,11); P("#9aa3ad",11,16+by,3,3); P("#c9ced6",11,16+by,1,2); }
+  if (c.badge && f==="down") { P("#f6c85f",4,11+by,2,2); P("#fff2b0",4,11+by,1,1); }
+  if (c.bag) { if (f==="up") { P(p.bag,4,10+by,6,5); P(darken(p.bag,.75),4,14+by,6,1); } else if (f==="down") { P(p.bag,4,10+by,1,4); P(p.bag,9,10+by,1,4); } else P(p.bag,2,10+by,2,5); }
+}
+function animalSprite(a, ox, oy, n){
+  const flip = n.hface==="left", step = n.moving ? Math.floor(n.anim*8)%2 : 0, dog = n.kind==="dog";
+  const P = (col,x,y,ww,hh) => { a.fillStyle=col; a.fillRect(flip ? ox+14-x-ww : ox+x, oy+y, ww, hh); };
+  const C = dog ? "#a8743f" : "#f2a13e", D = darken(C,.72), L = darken(C,1.3);
+  P(C,2,5,9,4); P(L,3,5,6,1); P(D,2,8,9,1);
+  P(D,3,9,1,step?1:2); P(D,5,9,1,step?2:1); P(D,8,9,1,step?1:2); P(D,10,9,1,step?2:1);
+  const hy = n.eatT>0 ? 3 + (Math.floor(t*6)%2) : 0;
+  P(C,9,2+hy,5,4); P(L,10,2+hy,2,1); P("#1f1712",12,3+hy,1,1); P(dog?"#1f1712":"#f08aa0",13,4+hy,1,1);
+  if (dog) { P(D,9,2,2,3); P(C,0,3+(Math.floor(t*6)%2),3,1); } else { P(C,9,1+hy,1,1); P(C,12,1+hy,1,1); P(C,0,2,2,1); P(C,1,3,1,2); if (n.pet) P("#ff5a7a",9,6,3,1); }
+  if (!dog) { P(D,4,6,1,2); P(D,6,6,1,2); }
+}
+function drawCharAt(g, c){
+  g.fillStyle="rgba(40,30,90,.3)"; g.fillRect(Math.round(c.x)-5, Math.round(c.y)-2, 10, 3);
+  outlined(g, Math.round(c.x)-7-8, Math.round(c.y)-20-8, a => charSprite(a,8,8,c));
+}
+function drawAnimalAt(g, n){
+  g.fillStyle="rgba(40,30,90,.3)"; g.fillRect(Math.round(n.x)-5, Math.round(n.y)-2, 11, 3);
+  outlined(g, Math.round(n.x)-7-8, Math.round(n.y)-11-8, a => animalSprite(a,8,8,n));
+}
+function drawPlayer(g){ drawCharAt(g, {x:player.x, y:player.y, face:player.face, moving:player.moving, anim:player.anim, pal:PLAYER_PAL, style:"short"}); }
+function carSprite(a, ox, oy, face, color){
+  const hz = face==="left"||face==="right", L=darken(color,1.18), D=darken(color,.72), DD=darken(color,.55), GL="#6fb4e6", GLH="#bfe4fb", TIRE="#1a1a22";
+  if (hz) {
+    const flip = face==="left";
+    const P=(col,x,y,ww,hh)=>{ a.fillStyle=col; a.fillRect(flip ? ox+24-x-ww : ox+x, oy+y, ww, hh); };
+    P(color,1,5,22,6); P(L,2,5,20,1); P(D,1,10,22,1); P(DD,1,11,22,1);
+    P(color,6,1,12,5); P(L,6,1,12,1); P(GL,7,2,4,3); P(GL,12,2,5,3); P(GLH,7,2,2,1); P(GLH,12,2,2,1); P(D,11,2,1,3);
+    P(D,12,6,1,4); P(DD,14,7,2,1); P(DD,8,7,2,1);
+    P("#ffe27a",22,6,1,2); P("#e0443a",1,6,1,2); P("#cfd4dc",22,8,1,2); P("#cfd4dc",1,8,1,2);
+    P(TIRE,3,10,5,3); P(TIRE,16,10,5,3); P("#9aa3ad",5,11,1,1); P("#9aa3ad",18,11,1,1);
+  } else {
+    const flipY = face==="down";
+    const P=(col,x,y,ww,hh)=>{ a.fillStyle=col; a.fillRect(ox+x, flipY ? oy+22-y-hh : oy+y, ww, hh); };
+    P(TIRE,0,4,2,4); P(TIRE,12,4,2,4); P(TIRE,0,15,2,4); P(TIRE,12,15,2,4);
+    P(color,1,1,12,20); P(D,12,1,1,20); P(L,1,1,1,20); P(DD,1,20,12,1);
+    P(GL,2,5,10,3); P(GLH,3,5,3,1); P(L,2,8,10,6); P(GL,2,14,10,2);
+    P("#ffe27a",2,1,2,1); P("#ffe27a",10,1,2,1); P("#e0443a",2,20,2,1); P("#e0443a",10,20,2,1);
+  }
+}
+function drawCarAt(g, cx, cy, face, color){
+  const hz = face==="left"||face==="right";
+  g.fillStyle="rgba(40,30,90,.32)";
+  if (hz) g.fillRect(Math.round(cx)-11, Math.round(cy)-3, 23, 4); else g.fillRect(Math.round(cx)-6, Math.round(cy)-18, 13, 19);
+  const ox = hz ? Math.round(cx)-12 : Math.round(cx)-7, oy = hz ? Math.round(cy)-13 : Math.round(cy)-22;
+  outlined(g, ox-8, oy-8, a => carSprite(a,8,8,face,color));
+}
+function drawPigeon(g, pg){
+  const x=Math.round(pg.x), y=Math.round(pg.y - pg.alt), flap = pg.state==="fly" ? (Math.floor(t*14)%2) : 0, dir = pg.dir;
+  const P=(c,a,b,ww,hh)=>{ g.fillStyle=c; g.fillRect(dir<0 ? x+6-a-ww : x+a, y+b, ww, hh); };
+  if (pg.alt>0) { g.fillStyle="rgba(40,30,90,.25)"; g.fillRect(Math.round(pg.x)+1, Math.round(pg.y)+4, 5, 1); }
+  P("#8a93a3",1,1,4,3); P("#b6bdc9",1,1,3,1); P("#5a6275",4,0,2,2); P("#f2a13e",6,1,1,1);
+  if (pg.state==="fly") { P("#c9ced6",1,flap?-2:3,3,1); } else { P("#e0644f",2,4,1,1); P("#e0644f",4,4,1,1); }
+}
+function drawArrow(g,x,y){
+  const sh=[[-3,0,7,2],[-2,2,5,1],[-1,3,3,1],[0,4,1,1]];
+  g.fillStyle="#1d2340"; for (const [a,b,c,d] of sh) g.fillRect(x+a+1,y+b+1,c,d);
+  g.fillStyle="#f6c85f"; for (const [a,b,c,d] of sh) g.fillRect(x+a,y+b,c,d);
+}
+function drawPlane(g,x,y,s,shadow){
+  const P=(c,a,b,ww,hh)=>{ g.fillStyle=shadow?"rgba(0,0,0,.22)":c; g.fillRect(x+a*s,y+b*s,ww*s,hh*s); };
+  P("#e9ecf1",6,0,3,15); P("#c9ced6",8,0,1,15); P("#e9ecf1",0,6,16,3); P("#e9ecf1",1,4,2,7); P("#3f64a8",2,7,12,1); P("#8cc4e8",14,7,2,1); P("#c8413b",1,4,1,1);
+}
+function drawRickshaw(g,x,y,dir){
+  g.fillStyle="#1d2340"; g.fillRect(x+1,y+9,4,4); g.fillRect(x+11,y+9,4,4);
+  g.fillStyle="#c8413b"; g.fillRect(x+3,y+7,10,2);
+  g.fillStyle="#2e7d4f"; g.fillRect(dir>0?x+2:x+8,y+1,6,6);
+  g.fillStyle="#f6c85f"; g.fillRect(dir>0?x+2:x+8,y+1,6,1);
+  g.fillStyle="#c68a5c"; g.fillRect(dir>0?x+11:x+3,y+2,3,3);
+  g.fillStyle="#3f64a8"; g.fillRect(dir>0?x+11:x+3,y+5,3,3);
+}
+
+/* ===================== Pathfinding ===================== */
+const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
+function findPath(fx,fy,gx,gy){
+  const sx=Math.floor(fx/T), sy=Math.floor((fy-4)/T), tx=Math.floor(gx/T), ty=Math.floor((gy-4)/T);
+  if (!inb(tx,ty) || !walk[ty*MW+tx] || !inb(sx,sy)) return null;
+  const start=sy*MW+sx, goal=ty*MW+tx, prev=new Int32Array(MW*MH).fill(-1), q=[start];
+  prev[start]=start;
+  for (let i=0;i<q.length;i++) {
+    const c=q[i]; if (c===goal) break;
+    const cx=c%MW, cy=(c/MW)|0;
+    for (const [dx,dy] of DIRS) { const nx=cx+dx, ny=cy+dy; if (!inb(nx,ny)) continue; const n=ny*MW+nx; if (prev[n]!==-1 || !walk[n]) continue; prev[n]=c; q.push(n); }
+  }
+  if (prev[goal]===-1) return null;
+  const pts=[];
+  for (let c=goal; c!==start; c=prev[c]) pts.push({x:(c%MW)*T+8, y:((c/MW)|0)*T+12});
+  pts.push({x:sx*T+8, y:sy*T+12});
+  return pts.reverse();
+}
+
+/* ===================== State and UI ===================== */
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const coarse = matchMedia("(pointer: coarse)").matches;
+const keys = {left:false,right:false,up:false,down:false};
+let route=null, near=null, tapMark=null, t=0, wx=null, tour=null, overlay=null;
+const $ = id => document.getElementById(id);
+const promptEl=$("prompt"), actBtn=$("actBtn"), countEl=$("count"), toastEl=$("toast");
+const dialog=$("dialog"), dlgTitle=$("dlgTitle"), dlgText=$("dlgText"), dlgExtra=$("dlgExtra"), dlgHint=$("dlgHint"), dlgClose=$("dlgClose");
+const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
+let visited = new Set();
+try { visited = new Set(JSON.parse(store.get("pc-visited")||"[]")); } catch(e){}
+let unlocked = store.get("pc-unlocked")==="1";
+const hasResume = () => CONFIG.resume && CONFIG.resume !== "#";
+
+function updateHud(){
+  const n = counted.filter(i => visited.has(i.id)).length;
+  countEl.textContent = n===counted.length ? "All " + n + " visited" : "Visited " + n + " of " + counted.length;
+  const rb = $("resumeBtn");
+  if (unlocked && hasResume()) { rb.href = CONFIG.resume; rb.hidden = false; } else rb.hidden = true;
+}
+let toastTimer=null;
+function toast(msg){ toastEl.textContent=msg; toastEl.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(() => toastEl.hidden=true, 4500); }
+function markVisited(it){
+  if (it.count===false || !it.id || visited.has(it.id)) return;
+  visited.add(it.id); store.set("pc-visited", JSON.stringify([...visited]));
+  if (!unlocked && TOUR.every(id => visited.has(id))) {
+    unlocked = true; store.set("pc-unlocked","1");
+    setTimeout(() => toast(hasResume() ? "You've seen the highlights. My resume is unlocked in the top bar." : "You've seen the highlights. Thanks for walking through."), 400);
+  }
+  updateHud();
+}
+function findNear(){
+  let best=null, bd=1e9;
+  if (player.driving) return null;
+  for (const n of npcs) { const d=Math.hypot(player.x-n.x, player.y-n.y); if (d<20 && d<bd) { bd=d; best=n; } }
+  if (car.x!=null) { const d=Math.hypot(player.x-car.x, player.y-(car.y-5)); if (d<30 && d<bd) { bd=d; best=CAR_ITEM; } }
+  for (const it of ITEMS) {
+    const d = it.kind==="object" ? Math.hypot(player.x-(it.tx*T+8), player.y-(it.ty*T+8)) : Math.hypot(player.x-it.sx, player.y-it.sy);
+    const lim = it.kind==="object" ? 22 : 18;
+    if (d<lim && d<bd) { bd=d; best=it; }
+  }
+  return best;
+}
+let lastPrompt="";
+function updatePrompt(){
+  const text = (player.driving && !dlgItem && !overlay) ? (coarse ? "Tap A to park" : "Press E to park") : (near && !dlgItem && !overlay) ? (coarse ? "Tap A to " + near.verb : "Press E to " + near.verb) : "";
+  if (text===lastPrompt) return;
+  lastPrompt=text; promptEl.textContent=text; promptEl.hidden=!text; actBtn.hidden=!(text && coarse);
+}
+
+function buildExtra(it, classicMode){
+  const frag = document.createDocumentFragment();
+  if (it.stats) frag.append(board(it.stats));
+  const wdg = classicMode ? it.staticWidget : it.widget;
+  if (wdg) frag.append(wdg());
+  if (it.tags) frag.append(h("ul", {class:"tags"}, it.tags.map(x => h("li", null, x))));
+  const links = (it.links||[]).filter(([,href]) => href && href!=="#" && !(classicMode && href.startsWith("#")));
+  if (links.length) frag.append(h("div", {class:"links"}, links.map(([label,href]) => {
+    if (href==="#classic") return h("button", {class:"btn", type:"button", onclick:() => openOverlay("classic")}, label);
+    if (href==="#tour") return h("button", {class:"btn", type:"button", onclick:() => { closeDialog(); startTour(); }}, label);
+    const ext = !href.startsWith("mailto:");
+    return h("a", {class:"btn", href, target:ext?"_blank":null, rel:ext?"noopener":null}, label);
+  })));
+  return frag;
+}
+
+let dlgItem=null, typer=null;
+function textOf(it){ return it.id==="bench" ? (CONFIG.personal.chill || "You sit by the pond for a minute. Nothing to do here but watch the water.") : it.text; }
+function openDialog(it){
+  if (it && it.npc) { const n=it; n.talkT=6; n.path=null; n.moving=false; n.face = Math.abs(player.x-n.x)>Math.abs(player.y-n.y) ? (player.x>n.x?"right":"left") : (player.y>n.y?"down":"up"); if (n.face==="left"||n.face==="right") n.hface=n.face; it = {title:n.name, text:n.lines[n.li++ % n.lines.length], count:false, widget: n.pet ? wCat : null}; }
+  dlgItem=it; route=null; for (const k in keys) keys[k]=false; player.moving=false;
+  markVisited(it);
+  dlgTitle.textContent=it.title; dlgExtra.replaceChildren(); dlgExtra.hidden=true; dialog.hidden=false; updatePrompt();
+  const full = textOf(it);
+  if (reduceMotion || !full) finishDialog();
+  else {
+    let i=0; dlgText.textContent=""; dlgHint.textContent = coarse ? "Tap to skip" : "E to skip";
+    typer = setInterval(() => { i+=3; dlgText.textContent=full.slice(0,i); if (i>=full.length) finishDialog(); }, 16);
+  }
+  dlgClose.focus({preventScroll:true});
+}
+function finishDialog(){
+  if (typer) { clearInterval(typer); typer=null; }
+  if (!dlgItem) return;
+  const full = textOf(dlgItem);
+  dlgText.textContent = full; dlgText.hidden = !full;
+  dlgExtra.replaceChildren(buildExtra(dlgItem,false)); dlgExtra.hidden=false;
+  dlgHint.textContent = coarse ? "" : "Esc to close";
+}
+function closeDialog(){
+  if (dlgItem===CHIEF_STOP) { stopEvt.active=false; stopEvt.done=true; store.set("pc-stopped","1"); const ch=npcs.find(n=>n.chief); if (ch) { ch.talkT=1.5; ch.path=null; } if (!stopEvt.answered) setTimeout(() => toast("\"Fine. Move along, then.\""), 300); }
+  if (typer) { clearInterval(typer); typer=null; }
+  const was = dlgItem;
+  dialog.hidden=true; dlgItem=null; lastPrompt="#"; updatePrompt();
+  canvas.focus({preventScroll:true});
+  if (tour && was && was.id===TOUR[tour.i]) {
+    tour.i++;
+    if (tour.i>=TOUR.length) { stopTour(); toast("That's the tour. Keep exploring, there's more across the river."); }
+    else { showTourBar(); goTo(byId[TOUR[tour.i]]); }
+  }
+}
+dlgClose.addEventListener("click", () => { if (typer) finishDialog(); else closeDialog(); });
+
+/* ---------- Tour ---------- */
+function showTourBar(){ $("tourText").textContent = "Tour stop " + (tour.i+1) + " of " + TOUR.length; $("tourBar").hidden=false; }
+function goTo(it){
+  const pts = findPath(player.x, player.y, it.sx, it.sy);
+  if (!pts) { player.x=it.sx; player.y=it.sy; openDialog(it); return; }
+  route = {pts, item:it};
+}
+function startTour(){ if (player.driving) valet(); if (overlay) closeOverlay(); if (dlgItem) closeDialog(); tour={i:0}; showTourBar(); goTo(byId[TOUR[0]]); }
+function stopTour(){ tour=null; $("tourBar").hidden=true; }
+$("tourStop").addEventListener("click", () => { stopTour(); route=null; });
+
+/* ---------- Overlays ---------- */
+const sheets = {map:$("mapSheet"), skills:$("skillsSheet"), classic:$("classic")};
+function openOverlay(name){
+  if (dlgItem) closeDialog();
+  if (overlay) sheets[overlay].hidden=true;
+  overlay=name; sheets[name].hidden=false; route=null; updatePrompt();
+  if (name==="map") drawBigMap();
+  const f = sheets[name].querySelector("[data-close], #backBtn"); if (f) f.focus({preventScroll:true});
+}
+function closeOverlay(){ if (!overlay) return; sheets[overlay].hidden=true; overlay=null; lastPrompt="#"; updatePrompt(); canvas.focus({preventScroll:true}); }
+for (const s of document.querySelectorAll("[data-close]")) s.addEventListener("click", closeOverlay);
+for (const s of [sheets.map, sheets.skills]) s.addEventListener("pointerdown", e => { if (e.target===s) closeOverlay(); });
+$("backBtn").addEventListener("click", closeOverlay);
+$("mapBtn").addEventListener("click", () => openOverlay("map"));
+$("skillsBtn").addEventListener("click", () => openOverlay("skills"));
+$("classicBtn").addEventListener("click", () => openOverlay("classic"));
+$("tourBtn").addEventListener("click", startTour);
+
+actBtn.addEventListener("click", () => { if (player.driving) park(); else if (near) openDialog(near); });
+
+const mc = document.createElement("canvas"); mc.width=160; mc.height=120;
+const miniEl = $("mini"), miniCtx = miniEl.getContext("2d"), bigMap = $("bigMap"), bigCtx = bigMap.getContext("2d");
+function drawBigMap(){
+  bigCtx.imageSmoothingEnabled = true; bigCtx.drawImage(wc,0,0,320,240);
+  bigCtx.font = "8px Silkscreen, monospace"; bigCtx.textAlign="center"; bigCtx.textBaseline="middle";
+  for (const a of AREAS) {
+    const [x,y,wd,ht] = a.rect.map(v => v*T/4);
+    bigCtx.globalAlpha=.18; bigCtx.fillStyle=a.color; bigCtx.fillRect(x,y,wd,ht); bigCtx.globalAlpha=1;
+    bigCtx.strokeStyle=a.color; bigCtx.lineWidth=2; bigCtx.strokeRect(x+1,y+1,wd-2,ht-2);
+    const tw=bigCtx.measureText(a.name.toUpperCase()).width+8, cx=x+wd/2, cy=y+7;
+    bigCtx.fillStyle=a.color; bigCtx.fillRect(Math.round(cx-tw/2),Math.round(cy-5),Math.ceil(tw),10);
+    bigCtx.fillStyle="#fff8e6"; bigCtx.fillText(a.name.toUpperCase(),Math.round(cx),Math.round(cy));
+  }
+  bigCtx.fillStyle="#f6c85f"; bigCtx.fillRect(Math.round(player.x/4)-2,Math.round(player.y/4)-4,4,4);
+}
+function buildSheets(){
+  const dl = $("districts");
+  for (const [name,id] of DISTRICTS) dl.append(h("button", {class:"btn ghost", type:"button", onclick:() => { if (player.driving) valet(); const it=byId[id]; player.x=it.sx; player.y=it.sy; player.face="up"; route=null; stopTour(); closeOverlay(); }}, name));
+  const sb = $("skillsBody");
+  sb.append(h("p", {class:"small"}, "Everything I carry around. Tools I've used in the projects across the city."));
+  for (const [grp, list] of Object.entries(SKILLS)) sb.append(h("p", {class:"group-title"}, grp), h("div", {class:"skills"}, list.map(x => h("div", {class:"slot"}, x))));
+  const cl = $("classicList");
+  const groups = {};
+  for (const it of ITEMS) if (it.d && it.id!=="welcome" && it.id!=="bench" && it.id!=="fishing" && it.id!=="tea") (groups[it.d] = groups[it.d] || []).push(it);
+  const order = ["Projects","Skills","Education","Experience","Home and social"];
+  for (const d of order) {
+    if (!groups[d]) continue;
+    const label = d;
+    cl.append(h("h2", null, label));
+    for (const it of groups[d]) {
+      const text = it.id==="house" ? "" : it.text;
+      cl.append(h("section", null, h("h3", null, it.title), text ? h("p", null, text) : null, buildExtra(it, true)));
+    }
+    if (d==="Home and social") cl.append(h("section", null, h("h3", null, "Character card"), wChar()));
+  }
+}
+function openChar(){ if (overlay) closeOverlay(); openDialog(CHAR); }
+
+/* ---------- Input ---------- */
+const KEYMAP={ArrowLeft:"left",KeyA:"left",ArrowRight:"right",KeyD:"right",ArrowUp:"up",KeyW:"up",ArrowDown:"down",KeyS:"down"};
+addEventListener("keydown", e => {
+  const tg=e.target, typing = tg && (tg.tagName==="INPUT" || tg.tagName==="TEXTAREA" || tg.tagName==="SELECT");
+  if (overlay) { if (e.key==="Escape") closeOverlay(); return; }
+  const ae=document.activeElement, act = e.code==="KeyE" || e.code==="Space" || e.code==="Enter";
+  if (dlgItem) {
+    if (e.key==="Escape") { closeDialog(); return; }
+    if (typing) return;
+    if (ae && (ae.tagName==="A" || (ae.tagName==="BUTTON" && ae!==dlgClose)) && (e.code==="Enter" || e.code==="Space")) return;
+    if (act) { e.preventDefault(); if (typer) finishDialog(); else closeDialog(); }
+    return;
+  }
+  if (typing) return;
+  if (act && ae && (ae.tagName==="BUTTON" || ae.tagName==="A")) return;
+  const k=KEYMAP[e.code];
+  if (k) { keys[k]=true; route=null; if (tour) stopTour(); e.preventDefault(); return; }
+  if (e.code==="KeyM") openOverlay("map");
+  else if (e.code==="KeyI") openOverlay("skills");
+  else if (e.code==="KeyT") startTour();
+  else if (e.code==="KeyC") openChar();
+  else if (e.key==="Escape" && tour) { stopTour(); route=null; }
+  else if (act && player.driving) { e.preventDefault(); park(); }
+  else if (act && near) { e.preventDefault(); openDialog(near); }
+});
+addEventListener("keyup", e => { const k=KEYMAP[e.code]; if (k) keys[k]=false; });
+addEventListener("blur", () => { for (const k in keys) keys[k]=false; });
+canvas.addEventListener("pointerdown", e => {
+  if (overlay) return;
+  if (dlgItem) { if (typer) finishDialog(); else closeDialog(); return; }
+  const px=e.clientX/scale+cam.x, py=e.clientY/scale+cam.y;
+  if (Math.abs(px-player.x)<8 && py>player.y-19 && py<player.y+2) { openChar(); return; }
+  let item=null;
+  for (const b of buildings) if (px>=b.x*T && px<(b.x+b.w)*T && py>=b.y*T-24 && py<(b.y+b.h)*T) item=b;
+  for (const o of objects) if (Math.abs(px-(o.tx*T+8))<12 && Math.abs(py-(o.ty*T+8))<12) item=o;
+  let dyn=null;
+  if (!player.driving) {
+    for (const n of npcs) if (Math.abs(px-n.x)<9 && py>n.y-21 && py<n.y+3) dyn=n;
+    if (car.x!=null) { const [a1,b1,a2,b2]=carRect(car.x,car.y,car.face); if (px>=a1-2 && px<=a2+2 && py>=b1-6 && py<=b2+2) dyn=CAR_ITEM; }
+  }
+  if (dyn) { if (near===dyn) { openDialog(dyn); return; } item=dyn; }
+  if (player.driving) item=null;
+  if (item && near===item) { openDialog(item); return; }
+  const carSide = car.x!=null ? (player.x<car.x ? car.x-22 : car.x+22) : 0;
+  const gx = item===dyn && dyn ? Math.floor((dyn===CAR_ITEM ? carSide : dyn.x)/T)*T+8 : item ? item.sx : Math.floor(px/T)*T+8;
+  const gy = item===dyn && dyn ? Math.floor(((dyn===CAR_ITEM ? car.y : dyn.y)-4)/T)*T+12 : item ? item.sy : Math.floor(py/T)*T+12;
+  const pts = findPath(player.x, player.y, gx, gy);
+  if (!pts) return;
+  if (tour) stopTour();
+  route = {pts, item}; tapMark = {x:gx, y:gy, life:0.6};
+});
+
+/* ===================== Live weather ===================== */
+async function loadWeather(){
+  if (!CONFIG.liveWeather) return;
+  try {
+    const u = "https://api.open-meteo.com/v1/forecast?latitude=32.7357&longitude=-97.1081&current=temperature_2m,precipitation,weather_code,wind_speed_10m,is_day&timezone=America%2FChicago&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=1";
+    const r = await fetch(u); if (!r.ok) return;
+    const j = await r.json(), c = j.current;
+    wx = {temp:c.temperature_2m, precip:c.precipitation, code:c.weather_code, wind:c.wind_speed_10m, isDay:c.is_day};
+  } catch(e) {}
+}
+const raining = () => wx && (wx.precip>0 || (wx.code>=51 && wx.code<=67) || (wx.code>=80 && wx.code<=82) || wx.code>=95);
+const chiHour = () => { try { return (+new Intl.DateTimeFormat("en-US",{timeZone:"America/Chicago",hour:"numeric",hourCycle:"h23"}).format(new Date()))%24; } catch(e) { return new Date().getHours(); } };
+const clockFmt = (() => { try { return new Intl.DateTimeFormat("en-US",{timeZone:"America/Chicago",hour:"numeric",minute:"2-digit"}); } catch(e) { return null; } })();
+const isNight = () => { if (wx) return !wx.isDay; const hr=chiHour(); return hr>=20 || hr<6; };
+const drops = Array.from({length:110}, () => ({x:Math.random(), y:Math.random(), v:0.6+Math.random()*0.5}));
+
+/* ===================== Loop ===================== */
+function tryMove(mx,my){
+  let moved=false; const hw=player.driving?7:5, hh=player.driving?7:5;
+  if (mx) { const nx=player.x+mx; if (!blocked(nx,player.y,hw,hh)) { player.x=nx; moved=true; } }
+  if (my) { const ny=player.y+my; if (!blocked(player.x,ny,hw,hh)) { player.y=ny; moved=true; } }
+  return moved;
+}
+function faceTo(dx,dy){ if (!dx && !dy) return; player.face = Math.abs(dx)>Math.abs(dy) ? (dx>0?"right":"left") : (dy>0?"down":"up"); }
+
+/* ===================== City life: NPCs, traffic, pigeons, car ===================== */
+const NPC_DEFS = [
+  {name:"Pilot", home:[14,15], r:5, style:"cap", pal:{hair:"#3a2a20",skin:"#e0b48a",shirt:"#f4f6fa",pants:"#1d2340",hat:"#1d2340"},
+   lines:["Late inbound aircraft cause most of my bad days. The board inside Gate A shows why.","If the first leg runs late, every leg after it pays for it. Try the slider in the terminal."]},
+  {name:"Gate agent", home:[22,13], r:3, style:"bun", pal:{hair:"#1f1712",skin:"#b07a52",shirt:"#3f7fd0",pants:"#2a2e44"},
+   lines:["Rebooking after a cancellation is triage. Medical needs and tight connections go first.","Gate A is open. The departure board is worth a look."]},
+  {name:"Banker", home:[46,15], r:6, style:"short", glasses:true, pal:{hair:"#8a8f98",skin:"#f0c8a0",shirt:"#2a2e44",pants:"#2a2e44"},
+   lines:["Customers with three or four products walk out the door. The model saw it before we did.","Stop by the bank and try the risk checker."]},
+  {name:"Recruiter", home:[39,22], r:11, style:"long", pal:{hair:"#8a4a2a",skin:"#f0c8a0",shirt:"#7a52b8",pants:"#2a2e44"},
+   lines:["I'm hiring Summer 2027 interns. Honestly, this city beats most resumes I read.","Short on time? Press T and the tour walks you through the best five.","The Social Club has all his links. Just saying."]},
+  {name:"Student", home:[48,41], r:6, style:"short", bag:true, pal:{hair:"#1f1712",skin:"#7a4a2e",shirt:"#f2a13e",pants:"#3f5a8a",bag:"#2f9a6a"},
+   lines:["I have a quiz tomorrow and I'm reading about Enigma rotors instead. The museum is a trap.","UTA Hall has the academic stuff if you need it."]},
+  {name:"Professor", home:[18,27], r:5, style:"short", glasses:true, pal:{hair:"#d8d8d8",skin:"#6a3f26",shirt:"#8a6a4f",pants:"#3a3f5a"},
+   lines:["Students should understand the forces shaping global industries. The observatory makes the point better than my lecture.","Paste a headline into GeoGraph and see who's connected to whom."]},
+  {name:"Dockworker", home:[45,26], r:5, style:"hardhat", pal:{hair:"#2a1d17",skin:"#c68a5c",shirt:"#3f7fd0",pants:"#3a3f5a",hat:"#f28a2e"},
+   lines:["Import prices are climbing. The yard's risk board flagged it before my boss did.","Forty features for one risk score. I just move the boxes."]},
+  {name:"Site foreman", home:[73,26], r:3, style:"hardhat", pal:{hair:"#5a3a22",skin:"#e0b48a",shirt:"#f28a2e",pants:"#2e3a5c",hat:"#ffd23f"},
+   lines:["All five agents in the print shop work. Now they need a manager to run them in order.","Hard hat zone. Three more apps are going up on this lot."]},
+  {name:"Tea seller", home:[32,53], r:0, style:"short", beard:true, pal:{hair:"#1f1712",skin:"#9a6440",shirt:"#f4f6fa",pants:"#2f9a6a"},
+   lines:["Cha? Milk and two sugars is standard.","He worked in e-commerce right up the street. Always talking about conversion rates."]},
+  {name:"Shopper", home:[16,56], r:6, style:"long", pal:{hair:"#1f1712",skin:"#b07a52",shirt:"#e0443a",pants:"#ffd23f"},
+   lines:["Prices here change by the hour. He used to track all of it.","The bazaar sells everything. Just ask."]},
+  {name:"Neighbor", home:[58,56], r:5, style:"bun", pal:{hair:"#c0c0c0",skin:"#e0b48a",shirt:"#2f9a6a",pants:"#6a4a8a"},
+   lines:["That Camry had a misfire once. He fixed it himself before I could name a mechanic.","The pond has skills in it, apparently. Don't ask me how."]},
+  {name:"Jogger", home:[39,30], r:14, speed:64, style:"cap", pal:{hair:"#e0b050",skin:"#f0c8a0",shirt:"#ffd23f",pants:"#1d2340",hat:"#e0443a"},
+   lines:["Can't stop, lap four!","I've run this loop more times than I can count. Still haven't fished at the pond."]},
+  {name:CONFIG.pet.name, kind:"cat", pet:true, home:[50,53], r:3, lines:["Mrrp.","She looks at you, then at her food bowl, then back at you.","She's been waiting by her little house all day."]},
+  {name:"Sensei", home:[22,41], r:6, style:"bun", pal:{hair:"#1f1712",skin:"#e0b48a",shirt:"#f7f4ec",pants:"#1d2340"},
+   lines:["Every skill in this district has a list of projects that used it. Practice beats theory.","The Dojo is for languages. The Lab is for data. Choose wisely, then do both."]},
+  {name:"Police chief", chief:true, home:[39,22], r:12, speed:34, style:"cap", badge:true, pal:{hair:"#2a1d17",skin:"#9a6440",shirt:"#2c4a80",pants:"#1d2340",hat:"#1d2340"},
+   lines:["Keeping the peace. Mostly from pigeons.","Traffic lights work, barricades hold, and the cat is well fed. Quiet day."]},
+  {name:"Road crew", home:[4,16], r:0, style:"hardhat", vest:true, prop:"sign", pal:{hair:"#2a1d17",skin:"#b07a52",shirt:"#f2c14e",pants:"#3a3f5a",hat:"#f28a2e"},
+   lines:["Road's closed past here. The city keeps growing, and every new project needs a new lot.","Hold up the sign, turn it around, repeat. It's a living."]},
+  {name:"Road crew", home:[75,16], r:0, style:"hardhat", vest:true, prop:"shovel", pal:{hair:"#8a4a2a",skin:"#f0c8a0",shirt:"#f2c14e",pants:"#2e3a5c",hat:"#ffd23f"},
+   lines:["We're paving this end for the next project. Nobody tells us what it is.","Coffee break in five. Don't tell the foreman."]},
+  {name:"Road crew", home:[4,30], r:0, style:"hardhat", vest:true, prop:"shovel", pal:{hair:"#1f1712",skin:"#7a4a2e",shirt:"#f28a2e",pants:"#3a3f5a",hat:"#f7f4ec"},
+   lines:["These barriers are load-tested. Please don't drive into them.","Dead end today, new district tomorrow."]},
+  {name:"Road crew", home:[75,30], r:0, style:"hardhat", vest:true, prop:"sign", pal:{hair:"#5a3a22",skin:"#e0b48a",shirt:"#f2c14e",pants:"#2a2e44",hat:"#f28a2e"},
+   lines:["Slow down, the crew's working.","If you're looking for projects, they're all back the way you came."]},
+  {name:"Road crew", home:[41,3], r:0, style:"hardhat", vest:true, prop:"shovel", pal:{hair:"#2a1d17",skin:"#c68a5c",shirt:"#f2c14e",pants:"#3a3f5a",hat:"#ffd23f"},
+   lines:["Runway expansion. Or maybe a parking lot. The plans keep changing."]},
+  {name:"Road crew", home:[73,46], r:0, style:"hardhat", vest:true, prop:"sign", pal:{hair:"#1f1712",skin:"#9a6440",shirt:"#f28a2e",pants:"#2e3a5c",hat:"#f7f4ec"},
+   lines:["Detour ahead. Take the long way and visit a building or two."]},
+  {name:"Dog", kind:"dog", home:[51,42], r:6, speed:40, lines:["Woof!","The dog drops a stick at your feet. It's shaped a lot like a Python."]}
+];
+const npcs = [];
+function nearestWalk(tx,ty){
+  for (let r=0;r<8;r++) for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++) { const x=tx+dx, y=ty+dy; if (inb(x,y) && walk[y*MW+x]) return [x,y]; }
+  return [tx,ty];
+}
+function spawnNpcs(){
+  for (const d of NPC_DEFS) {
+    const [hx,hy] = nearestWalk(d.home[0], d.home[1]);
+    const n = {...d, npc:true, kind:d.kind||"person", hx, hy, x:hx*T+8, y:hy*T+12, face:"down", hface:"right", moving:false, anim:0, path:null, wait:Math.random()*3, talkT:0, li:0, speed:d.speed||28};
+    n.verb = n.pet ? "say hi to " + n.name : n.kind==="person" ? "talk to the " + n.name.toLowerCase() : "pet the " + n.name.toLowerCase();
+    if (n.chief && visitorName()) n.lines = ["Good to see you again, " + visitorName() + ". Behaving yourself?", ...n.lines];
+    npcs.push(n);
+  }
+}
+const BOWL = {x:50*T+13, y:53*T+12, full:false};
+const crumbs = [];
+const hearts = [];
+function addHearts(x,y,n){ for (let i=0;i<n;i++) hearts.push({x:x+Math.random()*10-5, y:y-i*5, life:1.3+i*0.25}); }
+function npcGo(n, px, py, after){
+  const pts = findPath(n.x, n.y, Math.floor(px/T)*T+8, Math.floor((py-4)/T)*T+12);
+  n.path = pts ? [...pts.slice(1), {x:px, y:py}] : [{x:px, y:py}];
+  n.after = after || null;
+}
+function catUpdate(n, dt){
+  if (n.eatT>0) { n.eatT-=dt; n.moving=false; n.hface="right"; if (n.eatT<=0) { BOWL.full=false; addHearts(n.x+4,n.y-10,3); n.wait=2; } return true; }
+  if (n.follow && !n.path) {
+    if (player.driving) { n.moving=false; return true; }
+    if (Math.hypot(player.x-n.x, player.y-n.y) > 220) { n.x=player.x-14; n.y=player.y; crumbs.length=0; }
+    if (crumbs.length>3) {
+      const p=crumbs[0], dx=p.x-n.x, dy=p.y-n.y, d=Math.hypot(dx,dy), st=Math.max(60, SPEED*1.05)*dt;
+      if (d<=st) { n.x=p.x; n.y=p.y; crumbs.shift(); } else { n.x+=dx/d*st; n.y+=dy/d*st; }
+      if (Math.abs(dx)>0.01) n.hface = dx>0?"right":"left";
+      n.moving=true; n.anim+=dt;
+    } else { n.moving=false; n.anim=0; }
+    return true;
+  }
+  return false;
+}
+const stopEvt = {done: store.get("pc-stopped")==="1", at: 25+Math.random()*45, active:false};
+function chiefUpdate(n, dt){
+  if (!n.chasing) return false;
+  const tx = player.x + (n.x<player.x ? -14 : 14), ty = player.y, dx=tx-n.x, dy=ty-n.y, d=Math.hypot(dx,dy), st=(player.driving?140:95)*dt;
+  if (d<=st+1) { n.x=tx; n.y=ty; n.chasing=false; n.moving=false; n.face = n.x<player.x ? "right" : "left"; openDialog(CHIEF_STOP); return true; }
+  n.x+=dx/d*st; n.y+=dy/d*st; n.face = Math.abs(dx)>Math.abs(dy) ? (dx>0?"right":"left") : (dy>0?"down":"up"); n.moving=true; n.anim+=dt;
+  return true;
+}
+const visitorName = () => store.get("pc-visitor") || "";
+const CHIEF_STOP = {count:false, get title(){ return "Police chief"; },
+  get text(){ return player.driving ? "Pull over right there. License and registration... relax, I'm kidding. I'm the chief around here and I haven't seen you before. Who are you?" : "Hold it right there. I'm the chief around here, and I don't recognize you. Who are you?"; },
+  widget: () => wChief()};
+function wChief(){
+  const out = h("div", {class:"w"}), id = "u"+(++uid), inp = h("input", {type:"text", id, maxlength:"30", placeholder:"Your name", autocomplete:"off"});
+  const answer = (who, reply, extra) => {
+    stopEvt.answered = true; store.set("pc-stopped","1"); if (who) store.set("pc-visitor", who);
+    const chief = npcs.find(n => n.chief); if (chief && who) chief.lines = ["Good to see you again, " + who + ". Behaving yourself?", ...chief.lines.slice(-2)];
+    out.replaceChildren(h("p", null, reply), h("div", {class:"links"}, extra || null, h("button", {class:"btn", type:"button", onclick:closeDialog}, "Thanks, officer")));
+  };
+  const btn = (label, fn) => h("button", {class:"btn ghost", type:"button", onclick:fn}, label);
+  out.append(h("div", {class:"links"},
+    btn("A recruiter", () => answer("", "A recruiter! Why didn't you say so. Gate A is his best work and the Social Club has his links. You're free to go.", h("button", {class:"btn", type:"button", onclick:() => { closeDialog(); startTour(); }}, "Take the tour"))),
+    btn("A student", () => answer("", "Welcome. Try the terminal in the server shed. You didn't hear that from me. Carry on.")),
+    btn("A friend", () => answer("", "Any friend of Sajid's is a friend of mine. " + CONFIG.pet.name + " is by his house if you want to say hi.")),
+    btn("Just exploring", () => answer("", "Fair enough. Mind the barricades and the traffic lights. Have fun."))),
+    h("label", {for:id}, "Or tell him your name"), inp,
+    h("div", {class:"links", style:"margin-top:8px"}, h("button", {class:"btn", type:"button", onclick:() => { const nm = inp.value.trim().slice(0,30); if (!nm) { inp.focus(); return; } answer(nm, "Nice to meet you, " + nm + ". Everything checks out. You're free to go."); }}, "Show ID")));
+  inp.addEventListener("keydown", e => { if (e.key==="Enter") { e.preventDefault(); out.querySelector(".links:last-child .btn")?.click(); } });
+  return out;
+}
+function npcUpdate(n, dt){
+  if (n.chief && chiefUpdate(n, dt)) return;
+  if (n.talkT>0) { n.talkT-=dt; n.moving=false; n.anim=0; return; }
+  if (n.pet && catUpdate(n, dt)) return;
+  if (n.path && n.path.length) {
+    const p=n.path[0], dx=p.x-n.x, dy=p.y-n.y, d=Math.hypot(dx,dy), st=n.speed*dt;
+    if (d<=st) { n.x=p.x; n.y=p.y; n.path.shift(); } else { n.x+=dx/d*st; n.y+=dy/d*st; }
+    if (dx||dy) { n.face = Math.abs(dx)>Math.abs(dy) ? (dx>0?"right":"left") : (dy>0?"down":"up"); if (Math.abs(dx)>0.01) n.hface = dx>0?"right":"left"; }
+    n.moving=true; n.anim+=dt;
+    if (!n.path.length) { n.path=null; n.wait=1.5+Math.random()*4; if (n.after) { const f=n.after; n.after=null; f(); } }
+    return;
+  }
+  n.moving=false; n.anim=0; n.wait-=dt;
+  if (n.wait>0) return;
+  if (n.r===0) { n.face=["down","left","right","down"][Math.floor(Math.random()*4)]; n.wait=2+Math.random()*3; return; }
+  for (let k=0;k<8;k++) {
+    const tx=n.hx+Math.round((Math.random()*2-1)*n.r), ty=n.hy+Math.round((Math.random()*2-1)*n.r);
+    if (!inb(tx,ty) || !walk[ty*MW+tx]) continue;
+    const pts=findPath(n.x,n.y,tx*T+8,ty*T+12);
+    if (pts && pts.length>1 && pts.length<n.r*3+8) { n.path=pts; return; }
+  }
+  n.wait=1;
+}
+
+const LANES = [
+  {y:14*T+13, dir:-1, x0:4*T+14, x1:76*T-14}, {y:15*T+15, dir:1, x0:4*T+14, x1:76*T-14},
+  {y:28*T+13, dir:-1, x0:4*T+14, x1:76*T-14}, {y:29*T+15, dir:1, x0:4*T+14, x1:76*T-14},
+  {y:44*T+13, dir:-1, x0:12*T+14, x1:76*T-14}, {y:45*T+15, dir:1, x0:12*T+14, x1:76*T-14}
+];
+const lightPhase = () => { const p=t%16; return p<8 ? "green" : p<10 ? "yellow" : "red"; };
+const CAR_COLORS = ["#e0443a","#3f7fd0","#f2c14e","#2f9a6a","#f4f6fa","#7a52b8","#f28a2e"];
+const traffic = LANES.map((L,i) => ({L, li:i, wait:0, x:L.x0+40+hash(i,3,7)*(L.x1-L.x0-80), color:CAR_COLORS[i%CAR_COLORS.length], speed:46+hash(i,5,9)*18}));
+function trafficUpdate(c, dt){
+  const L=c.L, ahead = (px,py,dist) => { const dx=(px-c.x)*L.dir; return dx>0 && dx<dist && Math.abs(py-L.y)<13; };
+  let stop = ahead(player.x, player.y, 38);
+  if (!stop) for (const n of npcs) if (ahead(n.x,n.y,34)) { stop=true; break; }
+  if (!stop) for (const o of traffic) if (o!==c && o.L===L && ahead(o.x,L.y,30)) { stop=true; break; }
+  if (!stop && car.x!=null && ahead(car.x,car.y,38)) stop=true;
+  if (!stop && lightPhase()!=="green") {
+    const front = c.x + L.dir*11;
+    if (L.dir>0 && front<=37*T && front>37*T-22) stop=true;
+    if (L.dir<0 && front>=41*T && front<41*T+22) stop=true;
+  }
+  if (c.wait>0) { c.wait-=dt; return; }
+  if (!stop) c.x += L.dir*c.speed*dt;
+  if ((L.dir>0 && c.x>=L.x1) || (L.dir<0 && c.x<=L.x0)) { c.li ^= 1; c.L = LANES[c.li]; c.wait = 0.8; }
+}
+
+const pigeons = [];
+for (const [fx,fy,n] of [[30,17,5],[26,55,4],[47,40,4]]) for (let i=0;i<n;i++) {
+  const hx=fx*T+hash(fx,i,1)*56, hy=fy*T+4+hash(fy,i,2)*8;
+  pigeons.push({hx, hy, x:hx, y:hy, alt:0, state:"ground", dir:hash(i,fx,3)<.5?1:-1, vx:0, timer:hash(i,fy,4)*3});
+}
+function pigeonUpdate(p, dt){
+  const d = Math.hypot(player.x-p.x, player.y-p.y);
+  if (p.state==="ground") {
+    p.timer-=dt;
+    if (p.timer<=0) { p.timer=0.8+Math.random()*2; p.x += (Math.random()-.5)*6; p.dir = Math.random()<.5?1:-1; }
+    if (d<30 || (player.driving && d<60)) { p.state="fly"; p.vx=(p.x>=player.x?1:-1)*(55+Math.random()*30); p.dir=p.vx>0?1:-1; }
+  } else if (p.state==="fly") {
+    p.x+=p.vx*dt; p.y-=8*dt; p.alt+=48*dt;
+    if (p.alt>140) { p.state="gone"; p.timer=6+Math.random()*4; }
+  } else {
+    p.timer-=dt;
+    if (p.timer<=0 && Math.hypot(player.x-p.hx, player.y-p.hy)>90) { p.state="ground"; p.x=p.hx; p.y=p.hy; p.alt=0; p.timer=1; }
+  }
+}
+
+const CAR_ITEM = {id:"car", count:false, verb:"check out the Camry", title:"My " + CONFIG.car.name,
+  text:"My daily driver. I do my own maintenance on it: brakes, the parking brake, oil analysis, and a misfire I traced to a leaking valve cover gasket. Want to take it around the block?",
+  widget: () => h("div", {class:"w"},
+    h("div", {class:"links"}, h("button", {class:"btn", type:"button", onclick:() => { closeDialog(); startDriving(); }}, "Take it for a drive")),
+    h("p", {class:"small"}, (coarse ? "Tap where you want to go, then tap A to park." : "Arrow keys or WASD to drive, E to park.") + " Traffic stops for you. Pigeons don't wait."))};
+const PET_LINES = ["She purrs and leans into your hand.","She rolls onto her back. It's a trap. You pet her anyway.","Slow blink. That means she likes you.","She headbutts your hand for more."];
+function wCat(){
+  const cat = npcs.find(n => n.pet), nm = CONFIG.pet.name, out = h("p", {class:"small"}, "What do you want to do?");
+  const btn = (label, fn) => h("button", {class:"btn", type:"button", onclick:fn}, label);
+  return h("div", {class:"w"}, h("div", {class:"links"},
+    btn("Pet her", () => { addHearts(cat.x, cat.y-12, 3); out.textContent = PET_LINES[Math.floor(Math.random()*PET_LINES.length)]; }),
+    btn("Feed her", () => {
+      if (cat.fedAt!=null && t-cat.fedAt < 40) { out.textContent = nm + " sniffs the bowl and walks off. She's still full."; return; }
+      cat.fedAt=t; BOWL.full=true; cat.follow=false; cat.talkT=0; crumbs.length=0;
+      npcGo(cat, BOWL.x-9, BOWL.y, () => { cat.eatT=6; });
+      closeDialog(); toast("You filled the bowl. " + nm + " is on her way.");
+    }),
+    btn(cat.follow ? "Let her roam" : "Follow me", () => {
+      cat.follow = !cat.follow; cat.talkT=0; cat.path=null; crumbs.length=0;
+      if (!cat.follow) npcGo(cat, cat.hx*T+8, cat.hy*T+12);
+      closeDialog(); toast(cat.follow ? nm + " is following you." : nm + " heads back to her house.");
+    })), out);
+}
+function startDriving(){
+  if (car.x==null) return;
+  player.driving=true; player.x=car.x; player.y=car.y; player.face=car.face; car.x=null;
+  route=null; if (tour) stopTour(); lastPrompt="#"; updatePrompt();
+  toast("You're driving. " + (coarse ? "Tap A to park." : "Press E to park."));
+}
+function park(){
+  if (!player.driving) return;
+  const px=player.x, py=player.y;
+  car.x=px; car.y=py; car.face=player.face; player.driving=false;
+  for (const [ox,oy] of [[0,16],[0,-20],[-18,0],[18,0],[0,26],[-18,14],[18,14],[0,-28]]) {
+    if (!blocked(px+ox, py+oy)) { player.x=px+ox; player.y=py+oy; player.face="down"; lastPrompt="#"; updatePrompt(); return; }
+  }
+  player.driving=true; car.x=null; toast("No room to get out here. Try a wider spot.");
+}
+function valet(){ player.driving=false; Object.assign(car, CAR_HOME); }
+
+const runway = {u:[0,-70,-140], L:33*T};
+const rick = {x:11*T, dir:1};
+let overhead = {next:12, x:0, on:false}, clockT = -5, curArea = null;
+
+function update(dt){
+  t += dt;
+  if (tapMark) { tapMark.life-=dt; if (tapMark.life<=0) tapMark=null; }
+  const paused = t%14 > 10.5;
+  if (!paused) runway.u[0] += 22*dt;
+  for (let i=1;i<runway.u.length;i++) runway.u[i] = Math.min(runway.u[i]+22*dt, runway.u[i-1]-26);
+  rick.x += rick.dir*18*dt; if (rick.x>36*T) rick.dir=-1; if (rick.x<12*T) rick.dir=1;
+  if (!overhead.on && t>overhead.next) overhead = {on:true, x:-60, next:0};
+  if (overhead.on) { overhead.x += 70*dt; if (overhead.x > viewW+60) overhead = {on:false, next:t+35}; }
+  const pet = npcs.find(n => n.pet);
+  if (pet && pet.follow && !player.driving) { const last=crumbs[crumbs.length-1]; if (!last || Math.hypot(player.x-last.x, player.y-last.y)>6) crumbs.push({x:player.x, y:player.y}); if (crumbs.length>60) crumbs.shift(); }
+  for (let i=hearts.length-1;i>=0;i--) { hearts[i].y -= 14*dt; hearts[i].life -= dt; if (hearts[i].life<=0) hearts.splice(i,1); }
+  if (t - clockT > 1) { clockT = t; const cl=$("clock"); if (cl) cl.textContent = (clockFmt ? clockFmt.format(new Date()) : new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})) + (wx ? ", " + Math.round(wx.temp) + "°F" : ""); }
+  for (const n of npcs) npcUpdate(n, dt);
+  for (const c of traffic) trafficUpdate(c, dt);
+  for (const p of pigeons) pigeonUpdate(p, dt);
+
+  if (!stopEvt.done && !stopEvt.active && t>stopEvt.at && !dlgItem && !overlay && !tour) {
+    const ch = npcs.find(n => n.chief);
+    if (ch) { stopEvt.active=true; ch.path=null; ch.talkT=0; ch.chasing=true; const side = Math.random()<.5 ? -1 : 1; ch.x = player.x + side*(viewW/2+10); ch.y = player.y; route=null; for (const k in keys) keys[k]=false; toast("\"Hey, you! Hold up!\""); }
+  }
+  if (stopEvt.done===false && t>stopEvt.at && tour) stopEvt.at = t + 20;
+  const ar = areaAt(player.x, player.y);
+  if (ar && ar!==curArea) { if (curArea) toast("Now entering: " + ar.name); curArea = ar; const ae=$("area"); if (ae) ae.textContent = ar.name; }
+  if (dlgItem || overlay || stopEvt.active) { player.moving=false; if (stopEvt.active && !dlgItem) near=null; return; }
+  const vx=(keys.right?1:0)-(keys.left?1:0), vy=(keys.down?1:0)-(keys.up?1:0);
+  let moving=false;
+  if (vx || vy) {
+    const len=Math.hypot(vx,vy), sp=SPEED*(player.driving?2.2:1)*dt;
+    tryMove(vx/len*sp, vy/len*sp); moving=true; faceTo(vx,vy);
+  } else if (route) {
+    let budget = SPEED*(tour?2.6:player.driving?2.2:1)*dt;
+    while (budget>0 && route && route.pts.length) {
+      const p=route.pts[0], dx=p.x-player.x, dy=p.y-player.y, d=Math.hypot(dx,dy);
+      if (d<0.01) { route.pts.shift(); continue; }
+      const s=Math.min(d,budget); faceTo(dx,dy);
+      if (!tryMove(dx/d*s, dy/d*s)) { route=null; break; }
+      moving=true; budget-=s; if (s===d) route.pts.shift();
+    }
+    if (route && !route.pts.length) {
+      const it=route.item; route=null;
+      if (it && !player.driving) { near=findNear(); if (near===it) { player.face="up"; openDialog(it); return; } }
+    }
+  }
+  player.moving=moving; player.anim = moving ? player.anim+dt : 0;
+  near=findNear(); updatePrompt();
+}
+
+function render(){
+  updateCam();
+  ctx.fillStyle="#2e6a45"; ctx.fillRect(0,0,viewW,viewH);
+  ctx.save(); ctx.translate(-cam.x,-cam.y);
+  ctx.drawImage(wc,0,0);
+  if (!reduceMotion) {
+    const fr=Math.floor(t*2);
+    for (const [tx,ty] of waterTiles) {
+      if (tx*T < cam.x-T || tx*T > cam.x+viewW || ty*T < cam.y-T || ty*T > cam.y+viewH) continue;
+      if (hash(tx,ty,fr) < 0.14) { const sx=tx*T+3+Math.floor(hash(tx,ty,fr+500)*9), sy=ty*T+4+Math.floor(hash(tx,ty,fr+900)*8); ctx.fillStyle="#f2fbff"; ctx.fillRect(sx,sy,2,1); ctx.fillRect(sx+1,sy-1,1,1); }
+    }
+  }
+  for (const u of runway.u) { const px=3*T+((u%runway.L)+runway.L)%runway.L, py=4*T-7; outlined(ctx, px-8, py-8, a => drawPlane(a,8,8,1)); }
+  outlined(ctx, Math.round(rick.x)-8, 55*T+2-8, a => drawRickshaw(a,8,8,rick.dir));
+  for (const b of buildings) {
+    if (b.led) { ctx.fillStyle = (t%1.2<0.6) ? "#5fdc7a" : "#1f5a2e"; ctx.fillRect(b.led.x,b.led.y,3,3); }
+    if (b.anemo) { const a=t*6; ctx.fillStyle="#3d4a58"; for (let k=0;k<3;k++) ctx.fillRect(Math.round(b.anemo.x+Math.cos(a+k*2.09)*4)-1, Math.round(b.anemo.y+Math.sin(a+k*2.09)*2)-1, 2, 2); }
+  }
+  if (tapMark) { ctx.globalAlpha=Math.max(0,tapMark.life/0.6); ctx.fillStyle="#f2e8cf"; for (let i=-2;i<=2;i++) { ctx.fillRect(tapMark.x+i,tapMark.y-4+i,1,1); ctx.fillRect(tapMark.x+i,tapMark.y-4-i,1,1); } ctx.globalAlpha=1; }
+  const inView = (x,y,m) => x>cam.x-m && x<cam.x+viewW+m && y>cam.y-m && y<cam.y+viewH+m+24;
+  const ds = [];
+  ds.push({y:player.y, f:() => player.driving ? drawCarAt(ctx,player.x,player.y,player.face,CONFIG.car.color) : drawPlayer(ctx)});
+  if (car.x!=null && inView(car.x,car.y,30)) ds.push({y:car.y, f:() => drawCarAt(ctx,car.x,car.y,car.face,CONFIG.car.color)});
+  for (const n of npcs) if (inView(n.x,n.y,24)) ds.push({y:n.y, f:() => n.kind==="person" ? drawCharAt(ctx,n) : drawAnimalAt(ctx,n)});
+  for (const c of traffic) if (c.x>c.L.x0-4 && c.x<c.L.x1+4 && inView(c.x,c.L.y,30)) ds.push({y:c.L.y, f:() => drawCarAt(ctx,c.x,c.L.y,c.L.dir>0?"right":"left",c.color)});
+  for (const p of pigeons) if (p.state==="ground" && inView(p.x,p.y,10)) ds.push({y:p.y+4, f:() => drawPigeon(ctx,p)});
+  for (const d of decos) if (d.spr && inView(d.sx+d.spr.width/2, d.ty*T, 80)) ds.push({y:d.ty*T+15, f:() => ctx.drawImage(d.spr, d.sx, d.sy)});
+  if (inView(BOWL.x,BOWL.y,20)) ds.push({y:BOWL.y-1, f:() => { ctx.fillStyle=OUTLINE; ctx.fillRect(BOWL.x-4,BOWL.y-4,9,4); ctx.fillStyle="#3f7fd0"; ctx.fillRect(BOWL.x-3,BOWL.y-3,7,2); ctx.fillStyle="#6aa2ea"; ctx.fillRect(BOWL.x-3,BOWL.y-3,7,1); if (BOWL.full) { ctx.fillStyle="#b0703a"; ctx.fillRect(BOWL.x-2,BOWL.y-4,5,1); ctx.fillStyle="#d8944e"; ctx.fillRect(BOWL.x-1,BOWL.y-5,3,1); } }});
+  ds.sort((a,b) => a.y-b.y);
+  for (const d of ds) d.f();
+  ctx.drawImage(oc,0,0);
+  for (const p of pigeons) if (p.state==="fly") drawPigeon(ctx,p);
+  const ph = lightPhase(), blinkOn = Math.floor(t*2)%2===0;
+  for (const n of npcs) if (n.chief && (n.chasing || dlgItem===CHIEF_STOP)) { const on=Math.floor(t*8)%2; ctx.fillStyle=on?"#ff4a3a":"#3f7fd0"; ctx.fillRect(Math.round(n.x)-4,Math.round(n.y)-30,3,3); ctx.fillStyle=on?"#3f7fd0":"#ff4a3a"; ctx.fillRect(Math.round(n.x)+1,Math.round(n.y)-30,3,3); }
+  for (const d of decos) {
+    if (d.tl && inView(d.tl.x,d.tl.y,20)) {
+      const cols = [["red","#ff4a3a","#5a2222"],["yellow","#ffd23f","#5a4a1a"],["green","#5fdc7a","#1f4a2a"]];
+      cols.forEach(([name,on,off],k) => { ctx.fillStyle = ph===name ? on : off; ctx.fillRect(d.tl.x, d.tl.y+k*4, 4, 3); if (ph===name) { ctx.fillStyle="rgba(255,255,255,.6)"; ctx.fillRect(d.tl.x, d.tl.y+k*4, 1, 1); } });
+    }
+    if (d.blink && inView(d.blink.x,d.blink.y,20)) { ctx.fillStyle = blinkOn ? "#ffb13a" : "#7a4a1a"; ctx.fillRect(d.blink.x, d.blink.y, 2, 2); }
+  }
+  for (const hr of hearts) {
+    ctx.globalAlpha = Math.min(1, hr.life); ctx.fillStyle="#ff5a7a";
+    const hx=Math.round(hr.x), hy=Math.round(hr.y);
+    if (hr.note) { ctx.fillStyle="#5ff0ff"; ctx.fillRect(hx+3,hy,1,5); ctx.fillRect(hx+3,hy,3,1); ctx.fillRect(hx+5,hy,1,2); ctx.fillRect(hx+1,hy+4,3,2); }
+    else { for (const [a,b,c2,d2] of [[1,0,2,1],[4,0,2,1],[0,1,7,2],[1,3,5,1],[2,4,3,1],[3,5,1,1]]) ctx.fillRect(hx+a,hy+b,c2,d2); ctx.fillStyle="#ffc6d2"; ctx.fillRect(hx+1,hy+1,1,1); }
+  }
+  ctx.globalAlpha = 1;
+  const bob = reduceMotion ? 0 : Math.round(Math.sin(t*4)*1.5);
+  for (const it of counted) if (!visited.has(it.id)) drawArrow(ctx, it.markX, it.markY+bob);
+  ctx.restore();
+  if (overhead.on) { const y=Math.round(viewH*0.22); drawPlane(ctx, Math.round(overhead.x+18), y+34, 2, true); outlined(ctx, Math.round(overhead.x)-8, y-8, a => drawPlane(a,8,8,2)); }
+  if (raining()) {
+    ctx.fillStyle="rgba(40,50,80,.18)"; ctx.fillRect(0,0,viewW,viewH);
+    ctx.fillStyle="rgba(190,210,255,.55)";
+    for (const d of drops) { if (!reduceMotion) { d.y += d.v*0.02; d.x -= 0.002; if (d.y>1) { d.y=0; d.x=Math.random(); } if (d.x<0) d.x=1; } ctx.fillRect(Math.round(d.x*viewW), Math.round(d.y*viewH), 1, 3); }
+  }
+  if (isNight()) {
+    ctx.fillStyle="rgba(25,30,85,.38)"; ctx.fillRect(0,0,viewW,viewH);
+    for (const d of decos) if (d.glow) {
+      const gx=d.glow.x-cam.x, gy=d.glow.y-cam.y;
+      if (gx<-30 || gy<-30 || gx>viewW+30 || gy>viewH+30) continue;
+      for (const [r,a] of [[22,.10],[14,.14],[7,.2]]) { ctx.fillStyle="rgba(255,205,110,"+a+")"; ctx.beginPath(); ctx.arc(gx,gy+6,r,0,Math.PI*2); ctx.fill(); }
+    }
+  }
+  if (miniEl.getClientRects().length && getComputedStyle(miniEl).display !== "none") {
+    miniCtx.drawImage(mc,0,0);
+    miniCtx.strokeStyle="#f2e8cf"; miniCtx.lineWidth=1; miniCtx.strokeRect(Math.round(cam.x/8)+.5, Math.round(cam.y/8)+.5, Math.round(viewW/8), Math.round(viewH/8));
+    miniCtx.fillStyle="#f6c85f"; miniCtx.fillRect(Math.round(player.x/8)-1, Math.round(player.y/8)-2, 3, 3);
+  }
+}
+let last=0;
+function loop(now){ const dt=Math.min(0.05,(now-(last||now))/1000); last=now; update(dt); render(); requestAnimationFrame(loop); }
+
+async function boot(){
+  try { await Promise.race([document.fonts.load("8px Silkscreen"), new Promise(r => setTimeout(r,1500))]); } catch(e){}
+  buildMap(); buildDeco(); buildWalk(); spawnNpcs(); renderWorld();
+  const m = mc.getContext("2d"); m.imageSmoothingEnabled = true; m.drawImage(wc,0,0,160,120);
+  buildSheets(); updateHud(); resize();
+  canvas.focus({preventScroll:true});
+  requestAnimationFrame(loop);
+  loadWeather(); setInterval(loadWeather, 15*60*1000);
+  if (!store.get("pc-seen")) { store.set("pc-seen","1"); setTimeout(() => openDialog(byId.welcome), 500); }
+}
+boot();
+})();
+</script>
+</body>
+</html>
